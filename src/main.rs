@@ -31,8 +31,6 @@ fn bytes_to_ejson (el : &[u8]) -> String {
     wrapper.append(&mut el.to_vec());
     wrapper.push(0u8);
 
-    println!("{:?}", wrapper);
-    
     let reader = wrapper.as_slice();
     let doc = Document::from_reader(reader).expect("should read");
     let doc_bson : Bson = doc.into();
@@ -56,6 +54,55 @@ fn read_key (input: &[u8], mut off: usize) -> String {
     return String::from_utf8(input[key_start..off].to_vec()).expect("should decode");
 }
 
+struct bson_iter {
+    off : usize,
+    doclen: usize,
+}
+
+struct bson_element {
+    keystr: String,
+    el_start: usize,
+    el_end: usize,
+}
+
+impl bson_iter {
+    fn new (input: &[u8], off: usize) -> bson_iter {
+        return bson_iter { off: off + 4, doclen: read_i32(input, off)}
+    }
+    fn next_element (&mut self, input: &[u8]) -> Option<bson_element> {
+        if self.off == self.doclen {
+            return None;
+        }
+        let el_start = self.off;
+        let signed_byte = input[self.off];
+        println!("signed_byte={}", signed_byte);
+        self.off+=1;
+        
+        let keystr = read_key (input, self.off);
+        self.off += keystr.len() + 1;
+        println!("keystr={}", keystr);
+
+        // Depending on signed_byte, determine length of value.
+        let el_end;
+        if signed_byte == 16u8 {
+            self.off += 4;
+            el_end = self.off;
+        } else if signed_byte == 5u8 {
+            let len = read_i32 (input, self.off);
+            self.off += 4 + 1 + len;
+            el_end = self.off;
+        } else if signed_byte == 2u8 {
+            let len = read_i32 (input, self.off);
+            self.off += 4 + len;
+            el_end = self.off;
+        }
+        else {
+            panic!("do not know how to parse element with signed byte: {}", signed_byte);
+        }
+        return Some(bson_element { keystr, el_start, el_end });
+    }
+}
+
 fn decode_payload (input: &[u8]) -> Vec<Item> {
     let mut ret = Vec::<Item>::new();
     let mut off = 0;
@@ -69,52 +116,9 @@ fn decode_payload (input: &[u8]) -> Vec<Item> {
     });
     off += 1;
 
-    // if blob_subtype == 0 {
-    //     let key_uuid = &input[off..off+16];
-    //     ret.push(Item{
-    //         start: off,
-    //         end: off+16,
-    //         id: Id::KeyUUID,
-    //         human: None,
-    //         desc: hex::encode(key_uuid)
-    //     });
-    //     off += 16;
-    // }
-
-    // TODO: parse just enough BSON to iterate.
-
-    let doclen = read_i32 (input, off);
-    off+=4;
-
-    loop {
-        let el_start = off;
-        let signed_byte = input[off];
-        println!("signed_byte={}", signed_byte);
-        off+=1;
-        
-        let keystr = read_key (input, off);
-        off += keystr.len() + 1;
-        println!("keystr={}", keystr);
-
-        // Depending on signed_byte, determine length of value.
-        let el_end;
-        if signed_byte == 16u8 {
-            off += 4;
-            el_end = off;
-        } else if signed_byte == 5u8 {
-            let len = read_i32 (input, off);
-            off += 4 + 1 + len;
-            el_end = off;
-        } else if signed_byte == 2u8 {
-            let len = read_i32 (input, off);
-            off += 4 + len;
-            el_end = off;
-        }
-        else {
-            panic!("do not know how to parse element with signed byte: {}", signed_byte);
-        }
-        println!("element bytes: {:?}", &input[el_start..el_end]);
-        println!("element ejson: {}", bytes_to_ejson(&input[el_start..el_end]));
+    let mut iter = bson_iter::new(input, off);
+    while let Some(el) = iter.next_element(input) {
+        let bson_element{keystr, el_start, el_end} = el;
         if keystr == "a" {
             ret.push(Item { start: el_start, end: el_end, id: Id::Algorithm, desc: bytes_to_ejson(&input[el_start..el_end])})
         } else if keystr == "ki" {
@@ -124,11 +128,13 @@ fn decode_payload (input: &[u8]) -> Vec<Item> {
         } else {
             panic!("unexpected field for {:?}: {}", blob_subtype, keystr);
         }
-
-        if off == doclen {
-            break;
-        }
     }
+
+    off += iter.doclen;
+    if off < input.len() {
+        panic!("unexpected extra data: {:?}", &input[off..]);
+    }
+
     return ret;
 }
 
@@ -136,9 +142,7 @@ fn decode_payload (input: &[u8]) -> Vec<Item> {
 fn test_decode0() {
     let input= BASE64_STANDARD.decode(b"ADgAAAAQYQABAAAABWtpABAAAAAEYWFhYWFhYWFhYWFhYWFhYQJ2AAwAAAA0NTctNTUtNTQ2MgAA").expect("should decode");
     let got = decode_payload(&input);
-
-    println!("{:?}", got);
-
+    
     let mut idx = 0;
 
     assert_eq!(got[idx].id, Id::BlobSubtype(0));
