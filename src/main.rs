@@ -9,7 +9,15 @@ enum Id {
     KeyUUID,
     Algorithm,
     Value,
+    OriginalBsonType(u8),
+    Ciphertext 
 }
+
+// impl Display for Id {
+//     fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> { 
+//         todo!() 
+//     }
+// }
 
 #[derive(Debug)]
 struct Item {
@@ -54,22 +62,22 @@ fn read_key (input: &[u8], mut off: usize) -> String {
     return String::from_utf8(input[key_start..off].to_vec()).expect("should decode");
 }
 
-struct bson_iter {
+struct BsonIter {
     off : usize,
     doclen: usize,
 }
 
-struct bson_element {
+struct BsonElement {
     keystr: String,
     el_start: usize,
     el_end: usize,
 }
 
-impl bson_iter {
-    fn new (input: &[u8], off: usize) -> bson_iter {
-        return bson_iter { off: off + 4, doclen: read_i32(input, off)}
+impl BsonIter {
+    fn new (input: &[u8], off: usize) -> BsonIter {
+        return BsonIter { off: off + 4, doclen: read_i32(input, off)}
     }
-    fn next_element (&mut self, input: &[u8]) -> Option<bson_element> {
+    fn next_element (&mut self, input: &[u8]) -> Option<BsonElement> {
         if self.off == self.doclen {
             return None;
         }
@@ -99,7 +107,7 @@ impl bson_iter {
         else {
             panic!("do not know how to parse element with signed byte: {}", signed_byte);
         }
-        return Some(bson_element { keystr, el_start, el_end });
+        return Some(BsonElement { keystr, el_start, el_end });
     }
 }
 
@@ -116,21 +124,38 @@ fn decode_payload (input: &[u8]) -> Vec<Item> {
     });
     off += 1;
 
-    let mut iter = bson_iter::new(input, off);
-    while let Some(el) = iter.next_element(input) {
-        let bson_element{keystr, el_start, el_end} = el;
-        if keystr == "a" {
-            ret.push(Item { start: el_start, end: el_end, id: Id::Algorithm, desc: bytes_to_ejson(&input[el_start..el_end])})
-        } else if keystr == "ki" {
-            ret.push(Item { start: el_start, end: el_end, id: Id::KeyUUID, desc: bytes_to_ejson(&input[el_start..el_end])})
-        } else if keystr == "v" {
-            ret.push(Item { start: el_start, end: el_end, id: Id::Value, desc: bytes_to_ejson(&input[el_start..el_end])})
-        } else {
-            panic!("unexpected field for {:?}: {}", blob_subtype, keystr);
+    if blob_subtype == Id::BlobSubtype(0) {
+        let mut iter = BsonIter::new(input, off);
+        while let Some(el) = iter.next_element(input) {
+            let BsonElement{keystr, el_start, el_end} = el;
+            if keystr == "a" {
+                ret.push(Item { start: el_start, end: el_end, id: Id::Algorithm, desc: bytes_to_ejson(&input[el_start..el_end])})
+            } else if keystr == "ki" {
+                ret.push(Item { start: el_start, end: el_end, id: Id::KeyUUID, desc: bytes_to_ejson(&input[el_start..el_end])})
+            } else if keystr == "v" {
+                ret.push(Item { start: el_start, end: el_end, id: Id::Value, desc: bytes_to_ejson(&input[el_start..el_end])})
+            } else {
+                panic!("unexpected field for {:?}: {}", blob_subtype, keystr);
+            }
         }
+
+        off += iter.doclen;
+    } else if blob_subtype == Id::BlobSubtype(1) {
+        let keyuuid = &input[off..off+16];
+        ret.push(Item { start: off, end: off+16, id: Id::KeyUUID, desc: hex::encode(keyuuid)});
+        off += 16;
+
+        let original_bson_type = input[off];
+        ret.push(Item { start: off, end: off+1, id: Id::OriginalBsonType(original_bson_type), desc: format!("{}", original_bson_type)});
+        off += 1;
+
+        let ciphertext = &input[off..];
+        ret.push(Item { start: off, end: off + ciphertext.len(), id: Id::Ciphertext, desc: hex::encode(ciphertext)});
+        off += ciphertext.len();
+    } else {
+        panic!("unrecognized blob subtype: {:?}", blob_subtype);
     }
 
-    off += iter.doclen;
     if off < input.len() {
         panic!("unexpected extra data: {:?}", &input[off..]);
     }
@@ -159,6 +184,9 @@ fn test_decode0() {
 
     assert_eq!(got[idx].id, Id::Value);
     assert_eq!(got[idx].desc, r#""v":"457-55-5462""#.to_owned());
+    idx += 1;
+    
+    assert_eq!(idx, got.len());
 }
 
 #[test]
@@ -172,6 +200,19 @@ fn test_decode1() {
     assert_eq!(got[idx].desc, "BlobSubtype(1)".to_owned());
     idx += 1;
 
+    assert_eq!(got[idx].id, Id::KeyUUID);
+    assert_eq!(got[idx].desc, "00000000000000000000000000000000".to_owned());
+    idx += 1;
+
+    assert_eq!(got[idx].id, Id::OriginalBsonType);
+    assert_eq!(got[idx].desc, "2".to_owned());
+    idx += 1;
+
+    assert_eq!(got[idx].id, Id::Ciphertext);
+    assert_eq!(got[idx].desc, "c23fb7ce4bf654cf9a4df93ad11aa15eae9affbed694bc2efc1c571642fb129a46b23bbf9bc7f4c799010c3dc4653b4600b1979729b98e7a5902848892cc07a0".to_owned());
+    idx += 1;
+
+    assert_eq!(idx, got.len());
 }
 
 #[test]
@@ -186,5 +227,10 @@ fn test_bytes_to_ejson() {
 }
 
 fn main() {
-    println!("Hello, world!");
+    let input = BASE64_STANDARD.decode(b"AQAAAAAAAAAAAAAAAAAAAAACwj+3zkv2VM+aTfk60RqhXq6a/77WlLwu/BxXFkL7EppGsju/m8f0x5kBDD3EZTtGALGXlym5jnpZAoSIkswHoA==").expect("should decode");
+
+    let got: Vec<Item> = decode_payload(&input);
+    for item in got.iter() {
+        println!("{:?}: {}", item.id, item.desc);
+    }
 }
