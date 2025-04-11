@@ -1,0 +1,9 @@
+[package]
+name = "iue-decoder"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+base64 = "0.22.1"
+bson = "2.14.0"
+hex = "0.4.3"
