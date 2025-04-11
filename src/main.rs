@@ -1,23 +1,17 @@
 use base64::prelude::*;
 use bson::{Bson, Document};
 use hex;
-use std::fmt::Display;
 
 #[derive(PartialEq, Debug, Clone, Copy)]
 enum Id {
-    BlobSubtype(u8),
+    BlobSubtype,
     KeyUUID,
     Algorithm,
     Value,
-    OriginalBsonType(u8),
+    OriginalBsonType,
     Ciphertext 
 }
 
-// impl Display for Id {
-//     fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> { 
-//         todo!() 
-//     }
-// }
 
 #[derive(Debug)]
 struct Item {
@@ -114,17 +108,17 @@ impl BsonIter {
 fn decode_payload (input: &[u8]) -> Vec<Item> {
     let mut ret = Vec::<Item>::new();
     let mut off = 0;
-    let blob_subtype = Id::BlobSubtype(input[off]);
+    let blob_subtype = input[off];
 
     ret.push(Item{
         start: off,
         end: off + 1,
-        id: blob_subtype,
+        id: Id::BlobSubtype,
         desc: format!("{:?}", blob_subtype)
     });
     off += 1;
 
-    if blob_subtype == Id::BlobSubtype(0) {
+    if blob_subtype == 0 {
         let mut iter = BsonIter::new(input, off);
         while let Some(el) = iter.next_element(input) {
             let BsonElement{keystr, el_start, el_end} = el;
@@ -140,13 +134,13 @@ fn decode_payload (input: &[u8]) -> Vec<Item> {
         }
 
         off += iter.doclen;
-    } else if blob_subtype == Id::BlobSubtype(1) {
+    } else if blob_subtype == 1 {
         let keyuuid = &input[off..off+16];
         ret.push(Item { start: off, end: off+16, id: Id::KeyUUID, desc: hex::encode(keyuuid)});
         off += 16;
 
         let original_bson_type = input[off];
-        ret.push(Item { start: off, end: off+1, id: Id::OriginalBsonType(original_bson_type), desc: format!("{}", original_bson_type)});
+        ret.push(Item { start: off, end: off+1, id: Id::OriginalBsonType, desc: format!("{}", original_bson_type)});
         off += 1;
 
         let ciphertext = &input[off..];
@@ -170,8 +164,8 @@ fn test_decode0() {
 
     let mut idx = 0;
 
-    assert_eq!(got[idx].id, Id::BlobSubtype(0));
-    assert_eq!(got[idx].desc, "BlobSubtype(0)".to_owned());
+    assert_eq!(got[idx].id, Id::BlobSubtype);
+    assert_eq!(got[idx].desc, "0".to_owned());
     idx += 1;
 
     assert_eq!(got[idx].id, Id::Algorithm);
@@ -196,8 +190,8 @@ fn test_decode1() {
     
     let mut idx = 0;
 
-    assert_eq!(got[idx].id, Id::BlobSubtype(1));
-    assert_eq!(got[idx].desc, "BlobSubtype(1)".to_owned());
+    assert_eq!(got[idx].id, Id::BlobSubtype);
+    assert_eq!(got[idx].desc, "1".to_owned());
     idx += 1;
 
     assert_eq!(got[idx].id, Id::KeyUUID);
