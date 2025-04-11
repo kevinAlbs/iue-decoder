@@ -142,7 +142,7 @@ fn decode_payload (input: &[u8]) -> Vec<Item> {
 fn test_decode0() {
     let input= BASE64_STANDARD.decode(b"ADgAAAAQYQABAAAABWtpABAAAAAEYWFhYWFhYWFhYWFhYWFhYQJ2AAwAAAA0NTctNTUtNTQ2MgAA").expect("should decode");
     let got = decode_payload(&input);
-    
+
     let mut idx = 0;
 
     assert_eq!(got[idx].id, Id::BlobSubtype(0));
@@ -159,6 +159,19 @@ fn test_decode0() {
 
     assert_eq!(got[idx].id, Id::Value);
     assert_eq!(got[idx].desc, r#""v":"457-55-5462""#.to_owned());
+}
+
+#[test]
+fn test_decode1() {
+    let input= BASE64_STANDARD.decode(b"AQAAAAAAAAAAAAAAAAAAAAACwj+3zkv2VM+aTfk60RqhXq6a/77WlLwu/BxXFkL7EppGsju/m8f0x5kBDD3EZTtGALGXlym5jnpZAoSIkswHoA==").expect("should decode");
+    let got = decode_payload(&input);
+    
+    let mut idx = 0;
+
+    assert_eq!(got[idx].id, Id::BlobSubtype(1));
+    assert_eq!(got[idx].desc, "BlobSubtype(1)".to_owned());
+    idx += 1;
+
 }
 
 #[test]
