@@ -102,7 +102,10 @@
           // Show explanation (if exists)
           const id= e.target.getAttribute("data-id");
           document.querySelectorAll(".explanation").forEach((el) => {el.classList.remove("displayed");});
-          document.querySelector(`.explanation[data-id="${id}"]`).classList.add("displayed");
+          let exp = document.querySelector(`.explanation[data-id="${id}"]`);
+          if (exp) {
+            exp.classList.add("displayed");
+          }
         });
         
         do_decode();
