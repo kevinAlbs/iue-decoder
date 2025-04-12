@@ -3,17 +3,110 @@
   <head>
     <meta charset="utf-8" />
     <title>hello-wasm example</title>
+    <style type="text/css">
+      .highlighted {
+        background: rgb(165, 255, 188);
+      }
+      #view {
+        word-break: break-all;
+      }
+      #columns {
+        display: flex;
+        flex-direction: row;
+      }
+      #columns > div {
+        padding: 10px;
+      }
+      textarea {
+        width: 100%;
+        height: 3em;
+      }
+      .explanation {
+        display: none;
+      }
+      .explanation.displayed {
+        display: block;
+      }
+    </style>
   </head>
   <body>
+    <div id="container">
+      <textarea placeholder="Enter payload as base64">AQAAAAAAAAAAAAAAAAAAAAACwj+3zkv2VM+aTfk60RqhXq6a/77WlLwu/BxXFkL7EppGsju/m8f0x5kBDD3EZTtGALGXlym5jnpZAoSIkswHoA==</textarea>
+      <button id="btn-decode">Decode</button>
+      <div id="view-bytes"></div>
+      <div id="columns">
+        <div id="view">
+          <h1>Decoding:</h1>
+          <div id="view-decoded"></div>
+        </div>
+        <div id="explain">
+          <h1>Explanation:</h1>
+          <div id="view-explanation">
+            <div class="explanation" data-id="0">
+              Blob subtype determines the IUE payload.
+              (TODO): say which component produces each payload, and the intended destination.
+            </div>
+          </div>
+        </div>
+      </div> <!-- #columns -->
+    </div>
     <script type="module">
-      import init, { greet, decode } from "./pkg/iue_decoder.js";
+      import init, { decode } from "./pkg/iue_decoder.js";
       init().then(() => {
-        let got = decode("AQAAAAAAAAAAAAAAAAAAAAACwj+3zkv2VM+aTfk60RqhXq6a/77WlLwu/BxXFkL7EppGsju/m8f0x5kBDD3EZTtGALGXlym5jnpZAoSIkswHoA==");
-        got.forEach((item) => {
-          console.log("item", item.id, item.start, item.end, item.desc, item.ejson);
+        let view_bytes = document.querySelector("#view-bytes");
+        let view_decoded = document.querySelector("#view-decoded");
+        let textarea = document.querySelector("textarea");
+        let btn_decode = document.querySelector("#btn-decode");
+
+        function do_decode() {
+          let bytes = atob (textarea.value);
+          view_bytes.innerHTML = "";
+          for (let i = 0; i < bytes.length; i++) {
+            let byte = bytes.charCodeAt(i);
+            const hex = byte.toString(16).toUpperCase().padStart(2, '0');
+            view_bytes.innerHTML += `<span data-byte-index="${i}">${hex}</span>`;
+          }
+
+          let items = decode(textarea.value);
+          view_decoded.innerHTML = "";
+          items.forEach((item) => {
+            view_decoded.innerHTML += `<div><span data-start='${item.start}' data-end='${item.end}' data-id='${item.id}'>id=${item.id} desc=${item.desc}`;
+            if (item.ejson) {
+              view_decoded.innerHTML += `ejson=${item.ejson}`;
+            }
+            view_decoded.innerHTML += "</span></div>";
+          });
+        }
+        
+        btn_decode.addEventListener("click", do_decode);
+
+        view_decoded.addEventListener("mouseover", (e) => {
+          if (!e.target.getAttribute("data-start")) {
+            return;
+          }
+
+          // Remove existing highlights:
+          document.querySelectorAll(".highlighted").forEach((el) => {
+            el.classList.remove("highlighted");
+          });
+
+          // Highlight decoded element and byte span:
+          e.target.classList.add("highlighted");
+          const start = parseInt(e.target.getAttribute("data-start"));
+          const end = parseInt(e.target.getAttribute("data-end"));
+          for (let i = start; i < end; i++) {
+            document.querySelector(`[data-byte-index="${i}"]`).classList.add("highlighted");
+          }
+
+          // Show explanation (if exists)
+          const id= e.target.getAttribute("data-id");
+          document.querySelectorAll(".explanation").forEach((el) => {el.classList.remove("displayed");});
+          document.querySelector(`.explanation[data-id="${id}"]`).classList.add("displayed");
         });
-        window.got = got;
+        
+        do_decode();
       });
+      
     </script>
   </body>
 </html>
