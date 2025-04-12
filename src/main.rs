@@ -12,13 +12,34 @@ enum Id {
     Ciphertext 
 }
 
-
 #[derive(Debug)]
 struct Item {
+    id: Id,
+    desc: String,
     start: usize,
     end: usize,
-    id: Id,
-    desc: String
+    ejson: Option<String>
+}
+
+fn bytes_to_bson (el : &[u8]) -> bson::Bson {
+    // `el` is encoding of a BSON element. Includes type, key, and value.
+    // Wrap in a temporary document to convert to extended JSON.
+    let mut wrapper = Vec::<u8>::new();
+    let total_len : i32 = 
+        4 + // byte length
+        el.len() as i32 + 
+        1; // trailing NULL
+    wrapper.append(&mut total_len.to_le_bytes().to_vec());
+    wrapper.append(&mut el.to_vec());
+    wrapper.push(0u8);
+
+    let reader = wrapper.as_slice();
+    let doc = Document::from_reader(reader).expect("should read");
+    if let Some((_,v)) = doc.iter().next() {
+        return v.clone();
+    } else {
+        panic!("could not iterate");
+    }
 }
 
 fn bytes_to_ejson (el : &[u8]) -> String {
@@ -56,15 +77,15 @@ fn read_key (input: &[u8], mut off: usize) -> String {
     return String::from_utf8(input[key_start..off].to_vec()).expect("should decode");
 }
 
-struct BsonIter {
+struct BsonIter{
     off : usize,
     doclen: usize,
 }
 
 struct BsonElement {
     keystr: String,
-    el_start: usize,
-    el_end: usize,
+    start: usize,
+    end: usize,
 }
 
 impl BsonIter {
@@ -75,7 +96,7 @@ impl BsonIter {
         if self.off == self.doclen {
             return None;
         }
-        let el_start = self.off;
+        let start = self.off;
         let signed_byte = input[self.off];
         println!("signed_byte={}", signed_byte);
         self.off+=1;
@@ -85,23 +106,23 @@ impl BsonIter {
         println!("keystr={}", keystr);
 
         // Depending on signed_byte, determine length of value.
-        let el_end;
+        let end;
         if signed_byte == 16u8 {
             self.off += 4;
-            el_end = self.off;
+            end = self.off;
         } else if signed_byte == 5u8 {
             let len = read_i32 (input, self.off);
             self.off += 4 + 1 + len;
-            el_end = self.off;
+            end = self.off;
         } else if signed_byte == 2u8 {
             let len = read_i32 (input, self.off);
             self.off += 4 + len;
-            el_end = self.off;
+            end = self.off;
         }
         else {
             panic!("do not know how to parse element with signed byte: {}", signed_byte);
         }
-        return Some(BsonElement { keystr, el_start, el_end });
+        return Some(BsonElement { keystr, start, end });
     }
 }
 
@@ -114,20 +135,31 @@ fn decode_payload (input: &[u8]) -> Vec<Item> {
         start: off,
         end: off + 1,
         id: Id::BlobSubtype,
-        desc: format!("{:?}", blob_subtype)
+        desc: format!("{:?}", blob_subtype),
+        ejson: None
     });
     off += 1;
 
     if blob_subtype == 0 {
         let mut iter = BsonIter::new(input, off);
         while let Some(el) = iter.next_element(input) {
-            let BsonElement{keystr, el_start, el_end} = el;
+            let BsonElement{keystr, start, end} = el;
+            let bytes = &input[start..end];
+            let bson = bytes_to_bson(bytes);
+            let ejson = Some(bytes_to_ejson(bytes));
+
+            let desc = "".to_string();
             if keystr == "a" {
-                ret.push(Item { start: el_start, end: el_end, id: Id::Algorithm, desc: bytes_to_ejson(&input[el_start..el_end])})
+                let desc = match bson.as_i32().unwrap() {
+                    0 => "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic",
+                    1 => "AEAD_AES_256_CBC_HMAC_SHA_512-Random",
+                    _ => "Unknown",
+                }.to_string();
+                ret.push(Item { start, end, id: Id::Algorithm, ejson, desc })
             } else if keystr == "ki" {
-                ret.push(Item { start: el_start, end: el_end, id: Id::KeyUUID, desc: bytes_to_ejson(&input[el_start..el_end])})
+                ret.push(Item { start, end, id: Id::KeyUUID, ejson, desc })
             } else if keystr == "v" {
-                ret.push(Item { start: el_start, end: el_end, id: Id::Value, desc: bytes_to_ejson(&input[el_start..el_end])})
+                ret.push(Item { start, end, id: Id::Value, ejson, desc })
             } else {
                 panic!("unexpected field for {:?}: {}", blob_subtype, keystr);
             }
@@ -136,15 +168,15 @@ fn decode_payload (input: &[u8]) -> Vec<Item> {
         off += iter.doclen;
     } else if blob_subtype == 1 {
         let keyuuid = &input[off..off+16];
-        ret.push(Item { start: off, end: off+16, id: Id::KeyUUID, desc: hex::encode(keyuuid)});
+        ret.push(Item { start: off, end: off+16, id: Id::KeyUUID, desc: hex::encode(keyuuid), ejson: None});
         off += 16;
 
         let original_bson_type = input[off];
-        ret.push(Item { start: off, end: off+1, id: Id::OriginalBsonType, desc: format!("{}", original_bson_type)});
+        ret.push(Item { start: off, end: off+1, id: Id::OriginalBsonType, desc: format!("{}", original_bson_type), ejson: None});
         off += 1;
 
         let ciphertext = &input[off..];
-        ret.push(Item { start: off, end: off + ciphertext.len(), id: Id::Ciphertext, desc: hex::encode(ciphertext)});
+        ret.push(Item { start: off, end: off + ciphertext.len(), id: Id::Ciphertext, desc: hex::encode(ciphertext), ejson: None});
         off += ciphertext.len();
     } else {
         panic!("unrecognized blob subtype: {:?}", blob_subtype);
@@ -220,11 +252,16 @@ fn test_bytes_to_ejson() {
     assert_eq!(got, r#""foo":42"#);
 }
 
+#[test]
+fn test_golden_files () {
+    todo!();
+}
+
 fn main() {
     let input = BASE64_STANDARD.decode(b"AQAAAAAAAAAAAAAAAAAAAAACwj+3zkv2VM+aTfk60RqhXq6a/77WlLwu/BxXFkL7EppGsju/m8f0x5kBDD3EZTtGALGXlym5jnpZAoSIkswHoA==").expect("should decode");
 
     let got: Vec<Item> = decode_payload(&input);
     for item in got.iter() {
-        println!("{:?}: {}", item.id, item.desc);
+        println!("{:?}", item);
     }
 }
