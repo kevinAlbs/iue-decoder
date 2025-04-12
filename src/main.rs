@@ -257,6 +257,9 @@ fn test_golden_files () {
     todo!();
 }
 
+mod iue_impl;
+// use iue_decoder::foo;
+
 fn main() {
     let input = BASE64_STANDARD.decode(b"AQAAAAAAAAAAAAAAAAAAAAACwj+3zkv2VM+aTfk60RqhXq6a/77WlLwu/BxXFkL7EppGsju/m8f0x5kBDD3EZTtGALGXlym5jnpZAoSIkswHoA==").expect("should decode");
 
@@ -264,4 +267,6 @@ fn main() {
     for item in got.iter() {
         println!("{:?}", item);
     }
+
+    println!("foo returned {}", iue_impl::foo());
 }

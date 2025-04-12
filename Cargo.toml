@@ -1,9 +1,23 @@
 [package]
-name = "iue-decoder"
+name = "iue_decoder"
 version = "0.1.0"
 edition = "2021"
+
+[lib]
+name = "iue_decoder"
+# Use `cdylib` to export to WASM. Use `iue_impl` for code shared between lib and exe.
+crate-type = ["cdylib"]
+
+[[bin]]
+name = "iue_decoder"
 
 [dependencies]
 base64 = "0.22.1"
 bson = "2.14.0"
 hex = "0.4.3"
+wasm-bindgen = "0.2.100"
+
+# getrandom v2 and v3 require different feature flags to build for WASM.
+getrandom02 = { package = "getrandom", version = "0.2", features = ["js"] }
+getrandom03 = { package = "getrandom", version = "0.3", features = ["wasm_js"] }
+
