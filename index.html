@@ -70,11 +70,12 @@
           let items = decode(textarea.value);
           view_decoded.innerHTML = "";
           items.forEach((item) => {
-            view_decoded.innerHTML += `<div><span data-start='${item.start}' data-end='${item.end}' data-id='${item.id}'>id=${item.id} desc=${item.desc}`;
+            let str = `<div><span data-start='${item.start}' data-end='${item.end}' data-id='${item.id}'>id=${item.id} desc=${item.desc}`;
             if (item.ejson) {
-              view_decoded.innerHTML += `ejson=${item.ejson}`;
+              str += `ejson=${item.ejson}`;
             }
-            view_decoded.innerHTML += "</span></div>";
+            str += "</span></div>";
+            view_decoded.innerHTML += str;
           });
         }
         
