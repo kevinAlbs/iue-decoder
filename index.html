@@ -6,9 +6,13 @@
   </head>
   <body>
     <script type="module">
-      import init, { greet } from "./pkg/iue_decoder.js";
+      import init, { greet, decode } from "./pkg/iue_decoder.js";
       init().then(() => {
-        greet("WebAssembly");
+        let got = decode("AQAAAAAAAAAAAAAAAAAAAAACwj+3zkv2VM+aTfk60RqhXq6a/77WlLwu/BxXFkL7EppGsju/m8f0x5kBDD3EZTtGALGXlym5jnpZAoSIkswHoA==");
+        got.forEach((item) => {
+          console.log("item", item.id, item.start, item.end, item.desc, item.ejson);
+        });
+        window.got = got;
       });
     </script>
   </body>
