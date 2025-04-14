@@ -1,6 +1,7 @@
-use bson::{Bson, Document};
+use bson::{Binary, Bson, Document};
 use hex;
 use wasm_bindgen::prelude::*;
+use base64::prelude::*;
 
 #[derive(PartialEq, Debug, Clone, Copy)]
 
@@ -162,8 +163,6 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
             let bytes = &input[start..end];
             let bson = bytes_to_bson(bytes);
             let ejson = Some(bytes_to_ejson(bytes));
-
-            let desc = "".to_string();
             if keystr == "a" {
                 let desc = match bson.as_i32().unwrap() {
                     0 => "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic",
@@ -172,8 +171,16 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                 }.to_string();
                 ret.push(Item { start, end, id: Id::Algorithm, ejson, desc })
             } else if keystr == "ki" {
+                let desc = match bson {
+                    bson::Bson::Binary(b) => {
+                        hex::encode(b.bytes)
+                    },
+                    _ => panic!("Unexpected non-binary for 'ki")
+                };
+
                 ret.push(Item { start, end, id: Id::KeyUUID, ejson, desc })
             } else if keystr == "v" {
+                let desc = bson.into_relaxed_extjson().to_string();
                 ret.push(Item { start, end, id: Id::Value, ejson, desc })
             } else {
                 panic!("unexpected field for {:?}: {}", blob_subtype, keystr);
@@ -182,6 +189,18 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
 
         off += iter.doclen;
     } else if blob_subtype == 1 {
+        let keyuuid = &input[off..off+16];
+        ret.push(Item { start: off, end: off+16, id: Id::KeyUUID, desc: hex::encode(keyuuid), ejson: None});
+        off += 16;
+
+        let original_bson_type = input[off];
+        ret.push(Item { start: off, end: off+1, id: Id::OriginalBsonType, desc: format!("{}", original_bson_type), ejson: None});
+        off += 1;
+
+        let ciphertext = &input[off..];
+        ret.push(Item { start: off, end: off + ciphertext.len(), id: Id::Ciphertext, desc: hex::encode(ciphertext), ejson: None});
+        off += ciphertext.len();
+    } else if blob_subtype == 2 {
         let keyuuid = &input[off..off+16];
         ret.push(Item { start: off, end: off+16, id: Id::KeyUUID, desc: hex::encode(keyuuid), ejson: None});
         off += 16;
@@ -204,6 +223,21 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
     return ret;
 }
 
+fn dump_payload (input : &[u8]) -> String {
+    let mut out = String::new();
+
+    let items = decode_payload(&input);
+    for item in items.iter() {
+        out += format!("{:?}={}", item.id, item.desc).as_str();
+        if let Some(ejson) = &item.ejson {
+            out += format! (" ({})", ejson).as_str();
+        }
+        out += "\n";
+    }
+
+    return out;
+}
+
 #[test]
 fn test_decode0() {
     let input= BASE64_STANDARD.decode(b"ADgAAAAQYQABAAAABWtpABAAAAAEYWFhYWFhYWFhYWFhYWFhYQJ2AAwAAAA0NTctNTUtNTQ2MgAA").expect("should decode");
@@ -216,15 +250,16 @@ fn test_decode0() {
     idx += 1;
 
     assert_eq!(got[idx].id, Id::Algorithm);
-    assert_eq!(got[idx].desc, r#""a":1"#.to_owned());
+    assert_eq!(got[idx].ejson, Some(r#""a":1"#.to_owned()));
+    assert_eq!(got[idx].desc, "AEAD_AES_256_CBC_HMAC_SHA_512-Random");
     idx += 1;
 
     assert_eq!(got[idx].id, Id::KeyUUID);
-    assert_eq!(got[idx].desc, r#""ki":{"$binary":{"base64":"YWFhYWFhYWFhYWFhYWFhYQ==","subType":"04"}}"#.to_owned());
+    assert_eq!(got[idx].ejson, Some(r#""ki":{"$binary":{"base64":"YWFhYWFhYWFhYWFhYWFhYQ==","subType":"04"}}"#.to_owned()));
     idx += 1;
 
     assert_eq!(got[idx].id, Id::Value);
-    assert_eq!(got[idx].desc, r#""v":"457-55-5462""#.to_owned());
+    assert_eq!(got[idx].ejson, Some(r#""v":"457-55-5462""#.to_owned()));
     idx += 1;
     
     assert_eq!(idx, got.len());
@@ -257,6 +292,32 @@ fn test_decode1() {
 }
 
 #[test]
+fn test_decode2() {
+    let input= BASE64_STANDARD.decode(b"Am2IfShB4k/NqP8INteqCxUCEikm46tQNyXYxnUWcZ2J7mXfvZFHvSfQwQoXgUPt9I2Q1h3aN1K4mkgOOfk7jaOGZtPRW3iVjaeRjUh9Xw3M+Q==").expect("should decode");
+    let got = decode_payload(&input);
+    
+    let mut idx = 0;
+
+    assert_eq!(got[idx].id, Id::BlobSubtype);
+    assert_eq!(got[idx].desc, "2".to_owned());
+    idx += 1;
+
+    assert_eq!(got[idx].id, Id::KeyUUID);
+    assert_eq!(got[idx].desc, "6d887d2841e24fcda8ff0836d7aa0b15".to_owned());
+    idx += 1;
+
+    assert_eq!(got[idx].id, Id::OriginalBsonType);
+    assert_eq!(got[idx].desc, "2".to_owned());
+    idx += 1;
+
+    assert_eq!(got[idx].id, Id::Ciphertext);
+    assert_eq!(got[idx].desc, "122926e3ab503725d8c67516719d89ee65dfbd9147bd27d0c10a178143edf48d90d61dda3752b89a480e39f93b8da38666d3d15b78958da7918d487d5f0dccf9".to_owned());
+    idx += 1;
+
+    assert_eq!(idx, got.len());
+}
+
+#[test]
 fn test_bytes_to_ejson() {
     let v : Vec<u8> = vec![
         16, // int32
@@ -267,12 +328,30 @@ fn test_bytes_to_ejson() {
     assert_eq!(got, r#""foo":42"#);
 }
 
+
 #[test]
 fn test_golden_files () {
-    todo!();
+    let dir = std::fs::read_dir("testdata").unwrap();
+    for entry in dir {
+        let entry = entry.unwrap();
+            let file = entry.file_name();
+            if !file.to_str().unwrap().ends_with(".b64") {
+                continue;
+            }
+            let file_b64 = file.to_str().unwrap();
+            let without_ext = &file_b64[0..file_b64.len() - ".b64".len()];
+            let b64 = std::fs::read_to_string(format!("testdata/{}", file_b64)).unwrap();
+            let golden = std::fs::read_to_string(format!("testdata/{}.golden", without_ext)).unwrap();
+            let golden = golden.replace("\r\n", "\n").to_string();
+            let input = BASE64_STANDARD.decode(b64).unwrap();
+            let got = dump_payload(input.as_slice());
+            if got != golden {
+                println!("got:\n{}", got);
+                println!("golden:\n{}", golden);
+                assert_eq!(got, golden);
+            }
+            assert_eq!(got, golden);
+    }
 }
 
 
-pub fn foo() -> i32 {
-    return 123;
-}

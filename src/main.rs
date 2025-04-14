@@ -10,6 +10,4 @@ fn main() {
     for item in got.iter() {
         println!("{:?}", item);
     }
-
-    println!("foo returned {}", iue_impl::foo());
 }
