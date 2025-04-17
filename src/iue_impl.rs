@@ -12,7 +12,14 @@ pub enum Id {
     Algorithm,
     Value,
     OriginalBsonType,
-    Ciphertext 
+    Ciphertext,
+    FLE2EncryptionPlaceholder_Type,
+    FLE2EncryptionPlaceholder_Algorithm,
+    FLE2EncryptionPlaceholder_UserKeyId,
+    FLE2EncryptionPlaceholder_IndexKeyId,
+    FLE2EncryptionPlaceholder_Value,
+    FLE2EncryptionPlaceholder_MaxContentionCounter,
+    FLE2EncryptionPlaceholder_Sparsity
 }
 
 #[derive(Debug, Clone)]
@@ -134,6 +141,10 @@ impl BsonIter {
             let len = read_i32 (input, self.off);
             self.off += 4 + len;
             end = self.off;
+        } else if signed_byte == 18u8 {
+            // int64
+            self.off += 8;
+            end = self.off;
         }
         else {
             panic!("do not know how to parse element with signed byte: {}", signed_byte);
@@ -212,6 +223,63 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         let ciphertext = &input[off..];
         ret.push(Item { start: off, end: off + ciphertext.len(), id: Id::Ciphertext, desc: hex::encode(ciphertext), ejson: None});
         off += ciphertext.len();
+    } else if blob_subtype == 3 {
+        let mut iter = BsonIter::new(input, off);
+        while let Some(el) = iter.next_element(input) {
+            let BsonElement{keystr, start, end} = el;
+            let bytes = &input[start..end];
+            let bson = bytes_to_bson(bytes);
+            let ejson = Some(bytes_to_ejson(bytes));
+            if keystr == "t" {
+                let desc = match bson.as_i32().unwrap() {
+                    1 => "Insert",
+                    2 => "Find",
+                    _ => "Unknown",
+                }.to_string();
+                ret.push(Item { start, end, id: Id::FLE2EncryptionPlaceholder_Type, ejson, desc })
+            } else if keystr == "a" {
+                let desc = match bson.as_i32().unwrap() {
+                    1 => "Unindexed",
+                    2 => "Indexed Equality",
+                    3 => "Indexed Range",
+                    _ => "Unknown",
+                }.to_string();
+
+                ret.push(Item { start, end, id: Id::FLE2EncryptionPlaceholder_Algorithm, ejson, desc })
+            } else if keystr == "v" {
+                let desc = bson.into_relaxed_extjson().to_string();
+                ret.push(Item { start, end, id: Id::FLE2EncryptionPlaceholder_Value, ejson, desc })
+            } else if keystr == "cm" {
+                let desc = format!("{}",bson.as_i64().unwrap());
+                ret.push(Item { start, end, id: Id::FLE2EncryptionPlaceholder_MaxContentionCounter, ejson, desc })
+            } else if keystr == "ki" {
+                let desc = match bson {
+                    bson::Bson::Binary(b) => {
+                        hex::encode(b.bytes)
+                    },
+                    _ => panic!("Unexpected non-binary for 'ki")
+                };
+
+                ret.push(Item { start, end, id: Id::FLE2EncryptionPlaceholder_IndexKeyId, ejson, desc })
+            } else if keystr == "ku" {
+                let desc = match bson {
+                    bson::Bson::Binary(b) => {
+                        hex::encode(b.bytes)
+                    },
+                    _ => panic!("Unexpected non-binary for 'ku")
+                };
+
+                ret.push(Item { start, end, id: Id::FLE2EncryptionPlaceholder_UserKeyId, ejson, desc })
+            } else if keystr == "s" {
+                let desc = format!("{}",bson.as_i64().unwrap());
+                ret.push(Item { start, end, id: Id::FLE2EncryptionPlaceholder_Sparsity, ejson, desc })
+            }
+            else {
+                panic!("unexpected field for {:?}: {}", blob_subtype, keystr);
+            }
+        }
+
+        off += iter.doclen;
     } else {
         panic!("unrecognized blob subtype: {:?}", blob_subtype);
     }
@@ -340,6 +408,7 @@ fn test_golden_files () {
             }
             let file_b64 = file.to_str().unwrap();
             let without_ext = &file_b64[0..file_b64.len() - ".b64".len()];
+            println!("testing {}", without_ext);
             let b64 = std::fs::read_to_string(format!("testdata/{}", file_b64)).unwrap();
             let golden = std::fs::read_to_string(format!("testdata/{}.golden", without_ext)).unwrap();
             let golden = golden.replace("\r\n", "\n").to_string();
