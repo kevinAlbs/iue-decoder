@@ -1,7 +1,7 @@
 BlobSubtype=3
-FLE2EncryptionPlaceholder_Type=Find ("t":2)
-FLE2EncryptionPlaceholder_Algorithm=Indexed Equality ("a":2)
-FLE2EncryptionPlaceholder_IndexKeyId=12345678123498761234123456789012 ("ki":{"$binary":{"base64":"EjRWeBI0mHYSNBI0VniQEg==","subType":"04"}})
-FLE2EncryptionPlaceholder_UserKeyId=12345678123498761234123456789012 ("ku":{"$binary":{"base64":"EjRWeBI0mHYSNBI0VniQEg==","subType":"04"}})
-FLE2EncryptionPlaceholder_Value=123456 ("v":123456)
-FLE2EncryptionPlaceholder_MaxContentionCounter=0 ("cm":0)
+Type=Find ("t":2)
+Algorithm=Indexed Equality ("a":2)
+IndexKeyId=12345678123498761234123456789012 ("ki":{"$binary":{"base64":"EjRWeBI0mHYSNBI0VniQEg==","subType":"04"}})
+UserKeyId=12345678123498761234123456789012 ("ku":{"$binary":{"base64":"EjRWeBI0mHYSNBI0VniQEg==","subType":"04"}})
+Value=123456 ("v":123456)
+MaxContentionCounter=0 ("cm":0)

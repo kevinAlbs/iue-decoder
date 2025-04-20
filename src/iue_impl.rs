@@ -1,31 +1,12 @@
-use bson::{Binary, Bson, Document};
+use bson::{Bson, Document};
 use hex;
 use wasm_bindgen::prelude::*;
 use base64::prelude::*;
 
-#[derive(PartialEq, Debug, Clone, Copy)]
-
-#[wasm_bindgen]
-pub enum Id {
-    BlobSubtype,
-    KeyUUID,
-    Algorithm,
-    Value,
-    OriginalBsonType,
-    Ciphertext,
-    FLE2EncryptionPlaceholder_Type,
-    FLE2EncryptionPlaceholder_Algorithm,
-    FLE2EncryptionPlaceholder_UserKeyId,
-    FLE2EncryptionPlaceholder_IndexKeyId,
-    FLE2EncryptionPlaceholder_Value,
-    FLE2EncryptionPlaceholder_MaxContentionCounter,
-    FLE2EncryptionPlaceholder_Sparsity
-}
-
 #[derive(Debug, Clone)]
 #[wasm_bindgen]
 pub struct Item {
-    pub id: Id,
+    id: String,
     desc: String,
     pub start: usize,
     pub end: usize,
@@ -37,6 +18,10 @@ impl Item {
     #[wasm_bindgen(getter)]
     pub fn desc(&self) -> String {
         self.desc.clone()
+    }
+    #[wasm_bindgen(getter)]
+    pub fn id(&self) -> String {
+        self.id.clone()
     }
     #[wasm_bindgen(getter)]
     pub fn ejson(&self) -> Option<String> {
@@ -161,7 +146,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
     ret.push(Item{
         start: off,
         end: off + 1,
-        id: Id::BlobSubtype,
+        id: "BlobSubtype".to_string(),
         desc: format!("{:?}", blob_subtype),
         ejson: None
     });
@@ -180,7 +165,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                     1 => "AEAD_AES_256_CBC_HMAC_SHA_512-Random",
                     _ => "Unknown",
                 }.to_string();
-                ret.push(Item { start, end, id: Id::Algorithm, ejson, desc })
+                ret.push(Item { start, end, id: "Algorithm".to_string(), ejson, desc })
             } else if keystr == "ki" {
                 let desc = match bson {
                     bson::Bson::Binary(b) => {
@@ -189,10 +174,10 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                     _ => panic!("Unexpected non-binary for 'ki")
                 };
 
-                ret.push(Item { start, end, id: Id::KeyUUID, ejson, desc })
+                ret.push(Item { start, end, id: "KeyUUID".to_string(), ejson, desc })
             } else if keystr == "v" {
                 let desc = bson.into_relaxed_extjson().to_string();
-                ret.push(Item { start, end, id: Id::Value, ejson, desc })
+                ret.push(Item { start, end, id: "Value".to_string(), ejson, desc })
             } else {
                 panic!("unexpected field for {:?}: {}", blob_subtype, keystr);
             }
@@ -201,27 +186,27 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         off += iter.doclen;
     } else if blob_subtype == 1 {
         let keyuuid = &input[off..off+16];
-        ret.push(Item { start: off, end: off+16, id: Id::KeyUUID, desc: hex::encode(keyuuid), ejson: None});
+        ret.push(Item { start: off, end: off+16, id: "KeyUUID".to_string(), desc: hex::encode(keyuuid), ejson: None});
         off += 16;
 
         let original_bson_type = input[off];
-        ret.push(Item { start: off, end: off+1, id: Id::OriginalBsonType, desc: format!("{}", original_bson_type), ejson: None});
+        ret.push(Item { start: off, end: off+1, id: "OriginalBsonType".to_string(), desc: format!("{}", original_bson_type), ejson: None});
         off += 1;
 
         let ciphertext = &input[off..];
-        ret.push(Item { start: off, end: off + ciphertext.len(), id: Id::Ciphertext, desc: hex::encode(ciphertext), ejson: None});
+        ret.push(Item { start: off, end: off + ciphertext.len(), id: "Ciphertext".to_string(), desc: hex::encode(ciphertext), ejson: None});
         off += ciphertext.len();
     } else if blob_subtype == 2 {
         let keyuuid = &input[off..off+16];
-        ret.push(Item { start: off, end: off+16, id: Id::KeyUUID, desc: hex::encode(keyuuid), ejson: None});
+        ret.push(Item { start: off, end: off+16, id: "KeyUUID".to_string(), desc: hex::encode(keyuuid), ejson: None});
         off += 16;
 
         let original_bson_type = input[off];
-        ret.push(Item { start: off, end: off+1, id: Id::OriginalBsonType, desc: format!("{}", original_bson_type), ejson: None});
+        ret.push(Item { start: off, end: off+1, id: "OriginalBsonType".to_string(), desc: format!("{}", original_bson_type), ejson: None});
         off += 1;
 
         let ciphertext = &input[off..];
-        ret.push(Item { start: off, end: off + ciphertext.len(), id: Id::Ciphertext, desc: hex::encode(ciphertext), ejson: None});
+        ret.push(Item { start: off, end: off + ciphertext.len(), id: "Ciphertext".to_string(), desc: hex::encode(ciphertext), ejson: None});
         off += ciphertext.len();
     } else if blob_subtype == 3 {
         let mut iter = BsonIter::new(input, off);
@@ -236,7 +221,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                     2 => "Find",
                     _ => "Unknown",
                 }.to_string();
-                ret.push(Item { start, end, id: Id::FLE2EncryptionPlaceholder_Type, ejson, desc })
+                ret.push(Item { start, end, id: "Type".to_string(), ejson, desc })
             } else if keystr == "a" {
                 let desc = match bson.as_i32().unwrap() {
                     1 => "Unindexed",
@@ -245,13 +230,13 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                     _ => "Unknown",
                 }.to_string();
 
-                ret.push(Item { start, end, id: Id::FLE2EncryptionPlaceholder_Algorithm, ejson, desc })
+                ret.push(Item { start, end, id: "Algorithm".to_string(), ejson, desc })
             } else if keystr == "v" {
                 let desc = bson.into_relaxed_extjson().to_string();
-                ret.push(Item { start, end, id: Id::FLE2EncryptionPlaceholder_Value, ejson, desc })
+                ret.push(Item { start, end, id: "Value".to_string(), ejson, desc })
             } else if keystr == "cm" {
                 let desc = format!("{}",bson.as_i64().unwrap());
-                ret.push(Item { start, end, id: Id::FLE2EncryptionPlaceholder_MaxContentionCounter, ejson, desc })
+                ret.push(Item { start, end, id: "MaxContentionCounter".to_string(), ejson, desc })
             } else if keystr == "ki" {
                 let desc = match bson {
                     bson::Bson::Binary(b) => {
@@ -260,7 +245,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                     _ => panic!("Unexpected non-binary for 'ki")
                 };
 
-                ret.push(Item { start, end, id: Id::FLE2EncryptionPlaceholder_IndexKeyId, ejson, desc })
+                ret.push(Item { start, end, id: "IndexKeyId".to_string(), ejson, desc })
             } else if keystr == "ku" {
                 let desc = match bson {
                     bson::Bson::Binary(b) => {
@@ -269,10 +254,85 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                     _ => panic!("Unexpected non-binary for 'ku")
                 };
 
-                ret.push(Item { start, end, id: Id::FLE2EncryptionPlaceholder_UserKeyId, ejson, desc })
+                ret.push(Item { start, end, id: "UserKeyId".to_string(), ejson, desc })
             } else if keystr == "s" {
                 let desc = format!("{}",bson.as_i64().unwrap());
-                ret.push(Item { start, end, id: Id::FLE2EncryptionPlaceholder_Sparsity, ejson, desc })
+                ret.push(Item { start, end, id: "Sparsity".to_string(), ejson, desc })
+            }
+            else {
+                panic!("unexpected field for {:?}: {}", blob_subtype, keystr);
+            }
+        }
+
+        off += iter.doclen;
+    } else if blob_subtype == 4 {
+        let mut iter = BsonIter::new(input, off);
+        while let Some(el) = iter.next_element(input) {
+            let BsonElement{keystr, start, end} = el;
+            let bytes = &input[start..end];
+            let bson = bytes_to_bson(bytes);
+            let ejson = Some(bytes_to_ejson(bytes));
+            if keystr == "d" {
+                let desc = match bson {
+                    bson::Bson::Binary(b) => {
+                        hex::encode(b.bytes)
+                    }
+                    _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
+                }.to_string();
+                ret.push(Item { start, end, id: "EDCDerivedFromDataTokenAndCounter".to_string(), ejson, desc })
+            }
+            else if keystr == "s" {
+                let desc = match bson {
+                    bson::Bson::Binary(b) => {
+                        hex::encode(b.bytes)
+                    }
+                    _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
+                }.to_string();
+                ret.push(Item { start, end, id: "ESCDerivedFromDataTokenAndCounter".to_string(), ejson, desc })
+            }
+            else if keystr == "c" {
+                let desc = match bson {
+                    bson::Bson::Binary(b) => {
+                        hex::encode(b.bytes)
+                    }
+                    _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
+                }.to_string();
+                ret.push(Item { start, end, id: "ECCDerivedFromDataTokenAndCounter".to_string(), ejson, desc })
+            }
+            else if keystr == "p" {
+                let desc = match bson {
+                    bson::Bson::Binary(b) => {
+                        hex::encode(b.bytes)
+                    }
+                    _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
+                }.to_string();
+                ret.push(Item { start, end, id: "Encrypted tokens".to_string(), ejson, desc })
+            }
+            else if keystr == "u" {
+                let desc = match bson {
+                    bson::Bson::Binary(b) => {
+                        hex::encode(b.bytes)
+                    }
+                    _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
+                }.to_string();
+                ret.push(Item { start, end, id: "IndexKeyId".to_string(), ejson, desc })
+            }
+            else if keystr == "t" {
+                let desc = format!("{}", bson.as_i32().unwrap());
+                ret.push(Item { start, end, id: "Encrypted Type".to_string(), ejson, desc })
+            }
+            else if keystr == "v" {
+                let desc = bson.into_relaxed_extjson().to_string();
+                ret.push(Item { start, end, id: "Value".to_string(), ejson, desc })
+            }
+            else if keystr == "e" {
+                let desc = match bson {
+                    bson::Bson::Binary(b) => {
+                        hex::encode(b.bytes)
+                    }
+                    _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
+                }.to_string();
+                ret.push(Item { start, end, id: "ServerDataEncryptionLevel1Token".to_string(), ejson, desc })
             }
             else {
                 panic!("unexpected field for {:?}: {}", blob_subtype, keystr);
@@ -296,7 +356,7 @@ fn dump_payload (input : &[u8]) -> String {
 
     let items = decode_payload(&input);
     for item in items.iter() {
-        out += format!("{:?}={}", item.id, item.desc).as_str();
+        out += format!("{}={}", item.id, item.desc).as_str();
         if let Some(ejson) = &item.ejson {
             out += format! (" ({})", ejson).as_str();
         }
@@ -313,20 +373,20 @@ fn test_decode0() {
 
     let mut idx = 0;
 
-    assert_eq!(got[idx].id, Id::BlobSubtype);
+    assert_eq!(got[idx].id, "BlobSubtype".to_string());
     assert_eq!(got[idx].desc, "0".to_owned());
     idx += 1;
 
-    assert_eq!(got[idx].id, Id::Algorithm);
+    assert_eq!(got[idx].id, "Algorithm".to_string());
     assert_eq!(got[idx].ejson, Some(r#""a":1"#.to_owned()));
     assert_eq!(got[idx].desc, "AEAD_AES_256_CBC_HMAC_SHA_512-Random");
     idx += 1;
 
-    assert_eq!(got[idx].id, Id::KeyUUID);
+    assert_eq!(got[idx].id, "KeyUUID".to_string());
     assert_eq!(got[idx].ejson, Some(r#""ki":{"$binary":{"base64":"YWFhYWFhYWFhYWFhYWFhYQ==","subType":"04"}}"#.to_owned()));
     idx += 1;
 
-    assert_eq!(got[idx].id, Id::Value);
+    assert_eq!(got[idx].id, "Value".to_string());
     assert_eq!(got[idx].ejson, Some(r#""v":"457-55-5462""#.to_owned()));
     idx += 1;
     
@@ -340,19 +400,19 @@ fn test_decode1() {
     
     let mut idx = 0;
 
-    assert_eq!(got[idx].id, Id::BlobSubtype);
+    assert_eq!(got[idx].id, "BlobSubtype".to_string());
     assert_eq!(got[idx].desc, "1".to_owned());
     idx += 1;
 
-    assert_eq!(got[idx].id, Id::KeyUUID);
+    assert_eq!(got[idx].id, "KeyUUID".to_string());
     assert_eq!(got[idx].desc, "00000000000000000000000000000000".to_owned());
     idx += 1;
 
-    assert_eq!(got[idx].id, Id::OriginalBsonType);
+    assert_eq!(got[idx].id, "OriginalBsonType".to_string());
     assert_eq!(got[idx].desc, "2".to_owned());
     idx += 1;
 
-    assert_eq!(got[idx].id, Id::Ciphertext);
+    assert_eq!(got[idx].id, "Ciphertext".to_string());
     assert_eq!(got[idx].desc, "c23fb7ce4bf654cf9a4df93ad11aa15eae9affbed694bc2efc1c571642fb129a46b23bbf9bc7f4c799010c3dc4653b4600b1979729b98e7a5902848892cc07a0".to_owned());
     idx += 1;
 
@@ -366,19 +426,19 @@ fn test_decode2() {
     
     let mut idx = 0;
 
-    assert_eq!(got[idx].id, Id::BlobSubtype);
+    assert_eq!(got[idx].id, "BlobSubtype".to_string());
     assert_eq!(got[idx].desc, "2".to_owned());
     idx += 1;
 
-    assert_eq!(got[idx].id, Id::KeyUUID);
+    assert_eq!(got[idx].id, "KeyUUID".to_string());
     assert_eq!(got[idx].desc, "6d887d2841e24fcda8ff0836d7aa0b15".to_owned());
     idx += 1;
 
-    assert_eq!(got[idx].id, Id::OriginalBsonType);
+    assert_eq!(got[idx].id, "OriginalBsonType".to_string());
     assert_eq!(got[idx].desc, "2".to_owned());
     idx += 1;
 
-    assert_eq!(got[idx].id, Id::Ciphertext);
+    assert_eq!(got[idx].id, "Ciphertext".to_string());
     assert_eq!(got[idx].desc, "122926e3ab503725d8c67516719d89ee65dfbd9147bd27d0c10a178143edf48d90d61dda3752b89a480e39f93b8da38666d3d15b78958da7918d487d5f0dccf9".to_owned());
     idx += 1;
 
