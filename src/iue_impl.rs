@@ -106,12 +106,10 @@ impl BsonIter {
         }
         let start = self.off;
         let signed_byte = input[self.off];
-        println!("signed_byte={}", signed_byte);
         self.off+=1;
         
         let keystr = read_key (input, self.off);
         self.off += keystr.len() + 1;
-        println!("keystr={}", keystr);
 
         // Depending on signed_byte, determine length of value.
         let end;
@@ -340,6 +338,86 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         }
 
         off += iter.doclen;
+    } else if blob_subtype == 6 {
+        let keyuuid = &input[off..off+16];
+        ret.push(Item { start: off, end: off+16, id: "KeyUUID".to_string(), desc: hex::encode(keyuuid), ejson: None});
+        off += 16;
+
+        let original_bson_type = input[off];
+        ret.push(Item { start: off, end: off+1, id: "OriginalBsonType".to_string(), desc: format!("{}", original_bson_type), ejson: None});
+        off += 1;
+
+        let ciphertext = &input[off..];
+        ret.push(Item { start: off, end: off + ciphertext.len(), id: "Ciphertext".to_string(), desc: hex::encode(ciphertext), ejson: None});
+        off += ciphertext.len();
+    } else if blob_subtype == 7 {
+        let keyuuid = &input[off..off+16];
+        ret.push(Item { start: off, end: off+16, id: "S_KeyID".to_string(), desc: hex::encode(keyuuid), ejson: None});
+        off += 16;
+
+        let original_bson_type = input[off];
+        ret.push(Item { start: off, end: off+1, id: "OriginalBsonType".to_string(), desc: format!("{}", original_bson_type), ejson: None});
+        off += 1;
+
+        let ciphertext = &input[off..];
+        ret.push(Item { start: off, end: off + ciphertext.len(), id: "InnerEncrypted".to_string(), desc: hex::encode(ciphertext), ejson: None});
+        off += ciphertext.len();
+    } else if blob_subtype == 9 {
+        let keyuuid = &input[off..off+16];
+        ret.push(Item { start: off, end: off+16, id: "key_uuid".to_string(), desc: hex::encode(keyuuid), ejson: None});
+        off += 16;
+
+        let original_bson_type = input[off];
+        ret.push(Item { start: off, end: off+1, id: "OriginalBsonType".to_string(), desc: format!("{}", original_bson_type), ejson: None});
+        off += 1;
+
+        let ciphertext = &input[off..];
+        ret.push(Item { start: off, end: off + ciphertext.len(), id: "InnerEncrypted".to_string(), desc: hex::encode(ciphertext), ejson: None});
+        off += ciphertext.len();
+    }  else if blob_subtype == 12 {
+        let mut iter = BsonIter::new(input, off);
+        while let Some(el) = iter.next_element(input) {
+            let BsonElement{keystr, start, end} = el;
+            let bytes = &input[start..end];
+            let bson = bytes_to_bson(bytes);
+            let ejson = Some(bytes_to_ejson(bytes));
+            if keystr == "d" {
+                let desc = match bson {
+                    bson::Bson::Binary(b) => {
+                        hex::encode(b.bytes)
+                    }
+                    _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
+                }.to_string();
+                ret.push(Item { start, end, id: "EDCDerivedFromDataToken".to_string(), ejson, desc })
+            }
+            else if keystr == "s" {
+                let desc = match bson {
+                    bson::Bson::Binary(b) => {
+                        hex::encode(b.bytes)
+                    }
+                    _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
+                }.to_string();
+                ret.push(Item { start, end, id: "ESCDerivedFromDataToken".to_string(), ejson, desc })
+            }
+            else if keystr == "l" {
+                let desc = match bson {
+                    bson::Bson::Binary(b) => {
+                        hex::encode(b.bytes)
+                    }
+                    _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
+                }.to_string();
+                ret.push(Item { start, end, id: "ServerDerivedFromDataToken".to_string(), ejson, desc })
+            }
+            else if keystr == "cm" {
+                let desc = format!("{}", bson.as_i64().unwrap());
+                ret.push(Item { start, end, id: "Encrypted tokens".to_string(), ejson, desc })
+            }
+            else {
+                panic!("unexpected field for {:?}: {}", blob_subtype, keystr);
+            }
+        }
+
+        off += iter.doclen;
     } else {
         panic!("unrecognized blob subtype: {:?}", blob_subtype);
     }
@@ -470,11 +548,19 @@ fn test_golden_files () {
             let without_ext = &file_b64[0..file_b64.len() - ".b64".len()];
             println!("testing {}", without_ext);
             let b64 = std::fs::read_to_string(format!("testdata/{}", file_b64)).unwrap();
-            let golden = std::fs::read_to_string(format!("testdata/{}.golden", without_ext)).unwrap();
+            let file_golden = format!("testdata/{}.golden", without_ext);
+            let golden = std::fs::read_to_string(file_golden.clone()).unwrap();
             let golden = golden.replace("\r\n", "\n").to_string();
             let input = BASE64_STANDARD.decode(b64).unwrap();
             let got = dump_payload(input.as_slice());
             if got != golden {
+                if let Ok(env) = std::env::var("WRITE_GOLDEN") {
+                    if env == "1".to_string() {
+                        println!("Overwriting: {}", file_golden.clone());
+                        std::fs::write(file_golden, got).expect("should overwrite");
+                        continue;
+                    }
+                }
                 println!("got:\n{}", got);
                 println!("golden:\n{}", golden);
                 assert_eq!(got, golden);
