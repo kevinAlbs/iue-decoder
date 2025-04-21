@@ -1,0 +1,5 @@
+BlobSubtype=12
+EDCDerivedFromDataToken=4f0a18f82aee1de7f671f995f1dc89af30b4e4cbc0691934b05eb1be8f50ba9b ("d":{"$binary":{"base64":"TwoY+CruHef2cfmV8dyJrzC05MvAaRk0sF6xvo9Qups=","subType":"00"}})
+ESCDerivedFromDataToken=aad39e7c4320f77378e447993465cf54a502bc07285786d9f6775c55427b89dc ("s":{"$binary":{"base64":"qtOefEMg93N45EeZNGXPVKUCvAcoV4bZ9ndcVUJ7idw=","subType":"00"}})
+ServerDerivedFromDataToken=94edfa31a54b5510c55bac6b23ed144e4c907457d208404f91983cb05cee4c96 ("l":{"$binary":{"base64":"lO36MaVLVRDFW6xrI+0UTkyQdFfSCEBPkZg8sFzuTJY=","subType":"00"}})
+Encrypted tokens=0 ("cm":0)
