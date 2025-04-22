@@ -338,6 +338,59 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         }
 
         off += iter.doclen;
+    } else if blob_subtype == 5 {
+        let mut iter = BsonIter::new(input, off);
+        while let Some(el) = iter.next_element(input) {
+            let BsonElement{keystr, start, end} = el;
+            let bytes = &input[start..end];
+            let bson = bytes_to_bson(bytes);
+            let ejson = Some(bytes_to_ejson(bytes));
+            if keystr == "d" {
+                let desc = match bson {
+                    bson::Bson::Binary(b) => {
+                        hex::encode(b.bytes)
+                    }
+                    _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
+                }.to_string();
+                ret.push(Item { start, end, id: "EDCDerivedFromDataToken".to_string(), ejson, desc })
+            }
+            else if keystr == "s" {
+                let desc = match bson {
+                    bson::Bson::Binary(b) => {
+                        hex::encode(b.bytes)
+                    }
+                    _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
+                }.to_string();
+                ret.push(Item { start, end, id: "ESCDerivedFromDataToken".to_string(), ejson, desc })
+            }
+            else if keystr == "c" {
+                let desc = match bson {
+                    bson::Bson::Binary(b) => {
+                        hex::encode(b.bytes)
+                    }
+                    _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
+                }.to_string();
+                ret.push(Item { start, end, id: "ECCDerivedFromDataToken".to_string(), ejson, desc })
+            }
+            else if keystr == "cm" {
+                let desc = format!("{}", bson.as_i64().unwrap());
+                ret.push(Item { start, end, id: "Encrypted tokens".to_string(), ejson, desc })
+            }
+            else if keystr == "e" {
+                let desc = match bson {
+                    bson::Bson::Binary(b) => {
+                        hex::encode(b.bytes)
+                    }
+                    _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
+                }.to_string();
+                ret.push(Item { start, end, id: "ServerDataEncryptionLevel1Token".to_string(), ejson, desc })
+            }
+            else {
+                panic!("unexpected field for {:?}: {}", blob_subtype, keystr);
+            }
+        }
+
+        off += iter.doclen;
     } else if blob_subtype == 6 {
         let keyuuid = &input[off..off+16];
         ret.push(Item { start: off, end: off+16, id: "KeyUUID".to_string(), desc: hex::encode(keyuuid), ejson: None});
