@@ -87,7 +87,10 @@ fn read_key (input: &[u8], mut off: usize) -> String {
 
 struct BsonIter{
     off : usize,
+    startoff: usize,
     doclen: usize,
+    prev_signedbyte: u8,
+    prev_off: usize,
 }
 
 struct BsonElement {
@@ -98,19 +101,33 @@ struct BsonElement {
 
 impl BsonIter {
     fn new (input: &[u8], off: usize) -> BsonIter {
-        return BsonIter { off: off + 4, doclen: read_i32(input, off)}
+        return BsonIter { off: off + 4, startoff: off, doclen: read_i32(input, off), prev_off: 0, prev_signedbyte: 0}
+    }
+    fn recurse (&self, input: &[u8]) -> BsonIter {
+        // Depending on signed_byte, determine length of value.
+        if self.prev_signedbyte == 3u8 {
+            return BsonIter::new(input, self.prev_off);
+        } else if self.prev_signedbyte == 4u8 {
+            return BsonIter::new(input, self.prev_off);
+        }
+        else {
+            panic!("do not know how to recurse element with signed byte: {}", self.prev_signedbyte);
+        }
     }
     fn next_element (&mut self, input: &[u8]) -> Option<BsonElement> {
-        if self.off == self.doclen {
+        println!("self.off={}, stop at: {}", self.off, self.doclen + self.startoff - 1);
+        if self.off == self.startoff + self.doclen - 1 {
             return None;
         }
         let start = self.off;
         let signed_byte = input[self.off];
+        println!("signed_byte={}", signed_byte);
+        self.prev_signedbyte = signed_byte;
         self.off+=1;
         
         let keystr = read_key (input, self.off);
         self.off += keystr.len() + 1;
-
+        self.prev_off = self.off;
         // Depending on signed_byte, determine length of value.
         let end;
         if signed_byte == 16u8 {
@@ -127,6 +144,16 @@ impl BsonIter {
         } else if signed_byte == 18u8 {
             // int64
             self.off += 8;
+            end = self.off;
+        } else if signed_byte == 3u8 {
+            let len = read_i32 (input, self.off);
+            println!("doc len: {}", len);
+            self.off += len;
+            end = self.off;
+        }  else if signed_byte == 4u8 {
+            let len = read_i32 (input, self.off);
+            println!("doc len: {}", len);
+            self.off += len;
             end = self.off;
         }
         else {
@@ -427,7 +454,103 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         let ciphertext = &input[off..];
         ret.push(Item { start: off, end: off + ciphertext.len(), id: "InnerEncrypted".to_string(), desc: hex::encode(ciphertext), ejson: None});
         off += ciphertext.len();
-    }  else if blob_subtype == 12 {
+    } else if blob_subtype == 10 {
+        // https://github.com/mongodb/mongo/blob/8af29f897d967f540c60ca8fb6f38f65e6fc9620/src/mongo/crypto/fle_field_schema.idl#L317-L336
+        let mut iter = BsonIter::new(input, off);
+        while let Some(el) = iter.next_element(input) {
+            let BsonElement{keystr, start, end} = el;
+            let bytes = &input[start..end];
+            let bson = bytes_to_bson(bytes);
+            let ejson = Some(bytes_to_ejson(bytes));
+
+            if keystr == "payload" {
+                // Create a recursive iterator.
+                println!("recursing payload ... begin");
+                let mut payload_iter = iter.recurse(input);
+                while let Some(el) = payload_iter.next_element(input) {
+                    println!("on key {} ... begin", el.keystr);
+
+                    let BsonElement{keystr, start, end} = el;
+                    let bytes = &input[start..end];
+                    let bson = bytes_to_bson(bytes);
+                    let ejson = Some(bytes_to_ejson(bytes));
+                    if keystr == "g" {
+                        let mut g_iter = payload_iter.recurse(input);
+                        while let Some(el) = g_iter.next_element(input) {
+                            let idx = el.keystr;
+                            let mut g_doc_iter = g_iter.recurse(input);
+                            while let Some(el) = g_doc_iter.next_element(input) {
+                                let BsonElement{keystr, start, end} = el;
+                                let bytes = &input[start..end];
+                                let bson = bytes_to_bson(bytes);
+                                let ejson = Some(bytes_to_ejson(bytes));
+
+                                if keystr == "d" {
+                                    let desc = match bson {
+                                        bson::Bson::Binary(b) => {
+                                            hex::encode(b.bytes)
+                                        },
+                                        _ => panic!("Unexpected non-binary for g")
+                                    };
+                                    ret.push(Item { start, end, id: format!("payload edge [{}] EDCDerivedFromDataToken", idx), ejson, desc })
+                                }
+                                else if keystr == "s" {
+                                    let desc = match bson {
+                                        bson::Bson::Binary(b) => {
+                                            hex::encode(b.bytes)
+                                        },
+                                        _ => panic!("Unexpected non-binary for g")
+                                    };
+                                    ret.push(Item { start, end, id: format!("payload edge [{}] ESCDerivedFromDataToken", idx), ejson, desc })
+                                }
+                                else if keystr == "c" {
+                                    let desc = match bson {
+                                        bson::Bson::Binary(b) => {
+                                            hex::encode(b.bytes)
+                                        },
+                                        _ => panic!("Unexpected non-binary for g")
+                                    };
+                                    ret.push(Item { start, end, id: format!("payload edge [{}] ECCDerivedFromDataToken", idx), ejson, desc })
+                                }
+                            }
+                        }
+                    } else if keystr == "e" {
+                        let desc = match bson {
+                            bson::Bson::Binary(b) => {
+                                hex::encode(b.bytes)
+                            }
+                            _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
+                        }.to_string();
+                        ret.push(Item { start, end, id: "payload.ServerDataEncryptionLevel1Token".to_string(), ejson, desc })
+                    }
+                    else if keystr == "cm" {
+                        let desc = format!("{}", bson.as_i64().unwrap());
+                        ret.push(Item { start, end, id: "payload.Queryable Encryption max counter".to_string(), ejson, desc })
+                    }
+                    println!("on key ... end");
+                }
+
+                println!("recursing payload ... end");
+            }
+            else if keystr == "payloadId" {
+                let desc = format!("{}", bson.as_i32().unwrap());
+                ret.push(Item { start, end, id: "payloadId".to_string(), ejson, desc })
+            }
+            else if keystr == "firstOperator" {
+                let desc = format!("{}", bson.as_i32().unwrap());
+                ret.push(Item { start, end, id: "firstOperator".to_string(), ejson, desc })
+            }
+            else if keystr == "secondOperator" {
+                let desc = format!("{}", bson.as_i32().unwrap());
+                ret.push(Item { start, end, id: "secondOperator".to_string(), ejson, desc })
+            }
+            else {
+                panic!("unexpected field for {:?}: {}", blob_subtype, keystr);
+            }
+        }
+
+        off += iter.doclen;
+    } else if blob_subtype == 12 {
         let mut iter = BsonIter::new(input, off);
         while let Some(el) = iter.next_element(input) {
             let BsonElement{keystr, start, end} = el;
@@ -587,6 +710,61 @@ fn test_bytes_to_ejson() {
     assert_eq!(got, r#""foo":42"#);
 }
 
+#[test]
+fn test_bson_iter() {
+    // bson.encode({"x": {"y": 1}, "z": 2}).hex()
+    let v : Vec<u8> = hex::decode("1b0000000378000c0000001079000100000000107a000200000000").unwrap();
+    let input = v.as_slice();
+    let mut bson_iter = BsonIter::new(input, 0);
+
+    let got = bson_iter.next_element(input);
+    assert!(got.is_some());
+    assert_eq!(got.unwrap().keystr, "x");
+
+    let got = bson_iter.next_element(input);
+    assert!(got.is_some());
+    assert_eq!(got.unwrap().keystr, "z");
+
+    let got = bson_iter.next_element(input);
+    assert!(got.is_none());
+
+    // bson.encode({"x": "y", "z": 2}).hex()
+    let v : Vec<u8> = hex::decode("15000000027800020000007900107a000200000000").unwrap();
+    let input = v.as_slice();
+    let mut bson_iter = BsonIter::new(input, 0);
+
+    let got = bson_iter.next_element(input);
+    assert!(got.is_some());
+    assert_eq!(got.unwrap().keystr, "x");
+
+    let got = bson_iter.next_element(input);
+    assert!(got.is_some());
+    assert_eq!(got.unwrap().keystr, "z");
+
+    let got = bson_iter.next_element(input);
+    assert!(got.is_none());
+
+    // bson.encode({"x": "y", "z": 2}).hex()
+    let v : Vec<u8> = hex::decode("3800000010610001000000056b69001000000004616161616161616161616161616161610276000c0000003435372d35352d353436320000").unwrap();
+    let input = v.as_slice();
+    let mut bson_iter = BsonIter::new(input, 0);
+
+    let got = bson_iter.next_element(input);
+    assert!(got.is_some());
+    assert_eq!(got.unwrap().keystr, "a");
+
+    let got = bson_iter.next_element(input);
+    assert!(got.is_some());
+    assert_eq!(got.unwrap().keystr, "ki");
+
+    let got = bson_iter.next_element(input);
+    assert!(got.is_some());
+    assert_eq!(got.unwrap().keystr, "v");
+
+    let got = bson_iter.next_element(input);
+    assert!(got.is_none());
+}
+
 
 #[test]
 fn test_golden_files () {
@@ -621,5 +799,6 @@ fn test_golden_files () {
             assert_eq!(got, golden);
     }
 }
+
 
 
