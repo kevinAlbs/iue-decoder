@@ -1,4 +1,4 @@
-BlobSubtype=10
+BlobSubtype=10 (FLE2FindRangePayload)
 payload edge [0] EDCDerivedFromDataToken=a7d1f3bea3efb0661da5b115fecfc7f07af79467ec900ddeea67129684a854fe ("d":{"$binary":{"base64":"p9HzvqPvsGYdpbEV/s/H8Hr3lGfskA3e6mcSloSoVP4=","subType":"00"}})
 payload edge [0] ESCDerivedFromDataToken=97aa80f5ebf43cb4d0d147b80fdb6d83c55d1204e499e1baacc5820ba3c6bfd3 ("s":{"$binary":{"base64":"l6qA9ev0PLTQ0Ue4D9ttg8VdEgTkmeG6rMWCC6PGv9M=","subType":"00"}})
 payload edge [0] ECCDerivedFromDataToken=140a7dda45fb608fa60fc3cd62a9b8d4a7773f5d7e8ce7f0188cab8e5ad0044d ("c":{"$binary":{"base64":"FAp92kX7YI+mD8PNYqm41Kd3P11+jOfwGIyrjlrQBE0=","subType":"00"}})

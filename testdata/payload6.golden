@@ -1,4 +1,4 @@
-BlobSubtype=6
+BlobSubtype=6 (FLE2UnindexedEncryptedValue)
 KeyUUID=78c6fe8e504f45619b1cd07806eb85fc
 OriginalBsonType=2
 Ciphertext=7c6b1899a6bfadf57f9358768e425387b4b9c6d20cc45cf22b49522197a740909ea69e4aad16377401aea7db21c33f6939417e70087c297b80

@@ -1,4 +1,4 @@
-BlobSubtype=12
+BlobSubtype=12 (FLE2FindEqualityPayloadV2)
 EDCDerivedFromDataToken=f1a665c533744fc53c82ef452c8049c1af6696ab188db2f6b27fbd2071802ba3 ("d":{"$binary":{"base64":"8aZlxTN0T8U8gu9FLIBJwa9mlqsYjbL2sn+9IHGAK6M=","subType":"00"}})
 ESCDerivedFromDataToken=a2d518e69dd2aa8275f2ef16f6d91cd46e7665d6c3994573ce0b429c26403199 ("s":{"$binary":{"base64":"otUY5p3SqoJ18u8W9tkc1G52ZdbDmUVzzgtCnCZAMZk=","subType":"00"}})
 ServerDerivedFromDataToken=a49b4a3d6e3ea3d07b800ca734b2f6ea3b65078fa1ab94d745eb228dc61eb7c5 ("l":{"$binary":{"base64":"pJtKPW4+o9B7gAynNLL26jtlB4+hq5TXResijcYet8U=","subType":"00"}})

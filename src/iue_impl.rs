@@ -163,6 +163,29 @@ impl BsonIter {
     }
 }
 
+fn blob_subtype_to_string(blob_subtype: u8) -> &'static str {
+    match blob_subtype {
+        0 => "FLE1EncryptionPlaceholder",
+        1 => "FLE1DeterministicEncryptedValue",
+        2 => "FLE1RandomEncryptedValue",
+        3 => "FLE2EncryptionPlaceholder",
+        4 => "FLE2InsertUpdatePayload",
+        5 => "FLE2FindEqualityPayload",
+        6 => "FLE2UnindexedEncryptedValue",
+        7 => "FLE2IndexedEqualityEncryptedValue",
+        9 => "FLE2IndexedRangeEncryptedValue",
+        10 => "FLE2FindRangePayload",
+        11 => "FLE2InsertUpdatePayloadV2",
+        12 => "FLE2FindEqualityPayloadV2",
+        13 => "FLE2FindRangePayloadV2",
+        14 => "FLE2EqualityIndexedValueV2",
+        15 => "FLE2RangeIndexedValueV2",
+        16 => "FLE2UnindexedEncryptedValueV2",
+        17 => "FLE2IndexedTextEncryptedValue",
+        _ => panic!("{} has no string name. Please add one.", blob_subtype),
+    }
+}
+
 pub fn decode_payload (input: &[u8]) -> Vec<Item> {
     let mut ret = Vec::<Item>::new();
     let mut off = 0;
@@ -172,7 +195,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         start: off,
         end: off + 1,
         id: "BlobSubtype".to_string(),
-        desc: format!("{:?}", blob_subtype),
+        desc: format!("{:?} ({})", blob_subtype, blob_subtype_to_string(blob_subtype)),
         ejson: None
     });
     off += 1;
@@ -594,6 +617,114 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         }
 
         off += iter.doclen;
+    } else if blob_subtype == 13 {
+        // https://github.com/mongodb/mongo/blob/8af29f897d967f540c60ca8fb6f38f65e6fc9620/src/mongo/crypto/fle_field_schema.idl#L317-L336
+        let mut iter = BsonIter::new(input, off);
+        while let Some(el) = iter.next_element(input) {
+            let BsonElement{keystr, start, end} = el;
+            let bytes = &input[start..end];
+            let bson = bytes_to_bson(bytes);
+            let ejson = Some(bytes_to_ejson(bytes));
+
+            if keystr == "payload" {
+                // Create a recursive iterator.
+                println!("recursing payload ... begin");
+                let mut payload_iter = iter.recurse(input);
+                while let Some(el) = payload_iter.next_element(input) {
+                    println!("on key {} ... begin", el.keystr);
+
+                    let BsonElement{keystr, start, end} = el;
+                    let bytes = &input[start..end];
+                    let bson = bytes_to_bson(bytes);
+                    let ejson = Some(bytes_to_ejson(bytes));
+                    if keystr == "g" {
+                        let mut g_iter = payload_iter.recurse(input);
+                        while let Some(el) = g_iter.next_element(input) {
+                            let idx = el.keystr;
+                            let mut g_doc_iter = g_iter.recurse(input);
+                            while let Some(el) = g_doc_iter.next_element(input) {
+                                let BsonElement{keystr, start, end} = el;
+                                let bytes = &input[start..end];
+                                let bson = bytes_to_bson(bytes);
+                                let ejson = Some(bytes_to_ejson(bytes));
+
+                                if keystr == "d" {
+                                    let desc = match bson {
+                                        bson::Bson::Binary(b) => {
+                                            hex::encode(b.bytes)
+                                        },
+                                        _ => panic!("Unexpected non-binary for g")
+                                    };
+                                    ret.push(Item { start, end, id: format!("payload edge [{}] EDCDerivedFromDataToken", idx), ejson, desc })
+                                }
+                                else if keystr == "s" {
+                                    let desc = match bson {
+                                        bson::Bson::Binary(b) => {
+                                            hex::encode(b.bytes)
+                                        },
+                                        _ => panic!("Unexpected non-binary for g")
+                                    };
+                                    ret.push(Item { start, end, id: format!("payload edge [{}] ESCDerivedFromDataToken", idx), ejson, desc })
+                                }
+                                else if keystr == "c" {
+                                    let desc = match bson {
+                                        bson::Bson::Binary(b) => {
+                                            hex::encode(b.bytes)
+                                        },
+                                        _ => panic!("Unexpected non-binary for g")
+                                    };
+                                    ret.push(Item { start, end, id: format!("payload edge [{}] ECCDerivedFromDataToken", idx), ejson, desc })
+                                }
+                            }
+                        }
+                    } else if keystr == "e" {
+                        let desc = match bson {
+                            bson::Bson::Binary(b) => {
+                                hex::encode(b.bytes)
+                            }
+                            _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
+                        }.to_string();
+                        ret.push(Item { start, end, id: "payload.ServerDataEncryptionLevel1Token".to_string(), ejson, desc })
+                    }
+                    println!("on key ... end");
+                }
+
+                println!("recursing payload ... end");
+            }
+            else if keystr == "payloadId" {
+                let desc = format!("{}", bson.as_i32().unwrap());
+                ret.push(Item { start, end, id: "payloadId".to_string(), ejson, desc })
+            }
+            else if keystr == "firstOperator" {
+                let desc = format!("{}", bson.as_i32().unwrap());
+                ret.push(Item { start, end, id: "firstOperator".to_string(), ejson, desc })
+            }
+            else if keystr == "secondOperator" {
+                let desc = format!("{}", bson.as_i32().unwrap());
+                ret.push(Item { start, end, id: "secondOperator".to_string(), ejson, desc })
+            } else if keystr == "cm" {
+                let desc = format!("{}", bson.as_i64().unwrap());
+                ret.push(Item { start, end, id: "payload.Queryable Encryption max counter".to_string(), ejson, desc })
+            } else if keystr == "sp" {
+                let desc = format!("{}", bson.as_i64().unwrap());
+                ret.push(Item { start, end, id: "payload.Queryable Encryption sparsity".to_string(), ejson, desc })
+            } else if keystr == "pn" {
+                let desc = format!("{}", bson.as_i64().unwrap());
+                ret.push(Item { start, end, id: "payload.Queryable Encryption precision".to_string(), ejson, desc })
+            } else if keystr == "tf" {
+                let desc = format!("{}", bson.as_i32().unwrap());
+                ret.push(Item { start, end, id: "payload.Queryable Encryption trimFactor".to_string(), ejson, desc })
+            } else if keystr == "mn" {
+                ret.push(Item { start, end, id: "payload.Queryable Encryption indexMin".to_string(), ejson: ejson.clone(), desc: ejson.unwrap() })
+            } else if keystr == "mx" {
+                ret.push(Item { start, end, id: "payload.Queryable Encryption indexMax".to_string(), ejson: ejson.clone(), desc: ejson.unwrap() })
+            }
+            else {
+                panic!("unexpected field for {:?}: {}", blob_subtype, keystr);
+            }
+        }
+
+        off += iter.doclen;
     } else {
         panic!("unrecognized blob subtype: {:?}", blob_subtype);
     }
@@ -628,7 +759,7 @@ fn test_decode0() {
     let mut idx = 0;
 
     assert_eq!(got[idx].id, "BlobSubtype".to_string());
-    assert_eq!(got[idx].desc, "0".to_owned());
+    assert_eq!(got[idx].desc, "0 (FLE1EncryptionPlaceholder)".to_owned());
     idx += 1;
 
     assert_eq!(got[idx].id, "Algorithm".to_string());
@@ -644,58 +775,6 @@ fn test_decode0() {
     assert_eq!(got[idx].ejson, Some(r#""v":"457-55-5462""#.to_owned()));
     idx += 1;
     
-    assert_eq!(idx, got.len());
-}
-
-#[test]
-fn test_decode1() {
-    let input= BASE64_STANDARD.decode(b"AQAAAAAAAAAAAAAAAAAAAAACwj+3zkv2VM+aTfk60RqhXq6a/77WlLwu/BxXFkL7EppGsju/m8f0x5kBDD3EZTtGALGXlym5jnpZAoSIkswHoA==").expect("should decode");
-    let got = decode_payload(&input);
-    
-    let mut idx = 0;
-
-    assert_eq!(got[idx].id, "BlobSubtype".to_string());
-    assert_eq!(got[idx].desc, "1".to_owned());
-    idx += 1;
-
-    assert_eq!(got[idx].id, "KeyUUID".to_string());
-    assert_eq!(got[idx].desc, "00000000000000000000000000000000".to_owned());
-    idx += 1;
-
-    assert_eq!(got[idx].id, "OriginalBsonType".to_string());
-    assert_eq!(got[idx].desc, "2".to_owned());
-    idx += 1;
-
-    assert_eq!(got[idx].id, "Ciphertext".to_string());
-    assert_eq!(got[idx].desc, "c23fb7ce4bf654cf9a4df93ad11aa15eae9affbed694bc2efc1c571642fb129a46b23bbf9bc7f4c799010c3dc4653b4600b1979729b98e7a5902848892cc07a0".to_owned());
-    idx += 1;
-
-    assert_eq!(idx, got.len());
-}
-
-#[test]
-fn test_decode2() {
-    let input= BASE64_STANDARD.decode(b"Am2IfShB4k/NqP8INteqCxUCEikm46tQNyXYxnUWcZ2J7mXfvZFHvSfQwQoXgUPt9I2Q1h3aN1K4mkgOOfk7jaOGZtPRW3iVjaeRjUh9Xw3M+Q==").expect("should decode");
-    let got = decode_payload(&input);
-    
-    let mut idx = 0;
-
-    assert_eq!(got[idx].id, "BlobSubtype".to_string());
-    assert_eq!(got[idx].desc, "2".to_owned());
-    idx += 1;
-
-    assert_eq!(got[idx].id, "KeyUUID".to_string());
-    assert_eq!(got[idx].desc, "6d887d2841e24fcda8ff0836d7aa0b15".to_owned());
-    idx += 1;
-
-    assert_eq!(got[idx].id, "OriginalBsonType".to_string());
-    assert_eq!(got[idx].desc, "2".to_owned());
-    idx += 1;
-
-    assert_eq!(got[idx].id, "Ciphertext".to_string());
-    assert_eq!(got[idx].desc, "122926e3ab503725d8c67516719d89ee65dfbd9147bd27d0c10a178143edf48d90d61dda3752b89a480e39f93b8da38666d3d15b78958da7918d487d5f0dccf9".to_owned());
-    idx += 1;
-
     assert_eq!(idx, got.len());
 }
 

@@ -1,4 +1,4 @@
-BlobSubtype=3
+BlobSubtype=3 (FLE2EncryptionPlaceholder)
 Type=Find ("t":2)
 Algorithm=Indexed Equality ("a":2)
 IndexKeyId=12345678123498761234123456789012 ("ki":{"$binary":{"base64":"EjRWeBI0mHYSNBI0VniQEg==","subType":"04"}})

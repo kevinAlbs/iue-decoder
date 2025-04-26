@@ -1,4 +1,4 @@
-BlobSubtype=4
+BlobSubtype=4 (FLE2InsertUpdatePayload)
 EDCDerivedFromDataTokenAndCounter=8bfa554208766b47769819a09de32359a5d42d8f4696d584367e28b00d628b64 ("d":{"$binary":{"base64":"i/pVQgh2a0d2mBmgneMjWaXULY9GltWENn4osA1ii2Q=","subType":"00"}})
 ESCDerivedFromDataTokenAndCounter=187aa76e53cda9aa8ebc31222e384f122e86b7d63fb628480d50998e98c7af19 ("s":{"$binary":{"base64":"GHqnblPNqaqOvDEiLjhPEi6Gt9Y/tihIDVCZjpjHrxk=","subType":"00"}})
 ECCDerivedFromDataTokenAndCounter=30c447d55fbb8606a28610c4851ef41a574366043c08335ab202e52374f610f5 ("c":{"$binary":{"base64":"MMRH1V+7hgaihhDEhR70GldDZgQ8CDNasgLlI3T2EPU=","subType":"00"}})
