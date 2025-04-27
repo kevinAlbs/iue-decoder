@@ -76,6 +76,13 @@ fn read_i32 (input: &[u8], off: usize) -> usize {
     return i32::from_le_bytes(le_bytes) as usize;
 }
 
+fn read_u32 (input: &[u8], off: usize) -> usize {
+    let mut le_bytes = [0u8;4];
+    le_bytes.copy_from_slice(&input[off..off+4]);
+    
+    return u32::from_le_bytes(le_bytes) as usize;
+}
+
 fn read_key (input: &[u8], mut off: usize) -> String {
     let key_start = off;
     // Find NULL byte to terminate key.
@@ -182,6 +189,7 @@ fn blob_subtype_to_string(blob_subtype: u8) -> &'static str {
         15 => "FLE2RangeIndexedValueV2",
         16 => "FLE2UnindexedEncryptedValueV2",
         17 => "FLE2IndexedTextEncryptedValue",
+        18 => "FLE2IndexedTextEncryptedValue",
         _ => panic!("{} has no string name. Please add one.", blob_subtype),
     }
 }
@@ -618,6 +626,302 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
 
         off += iter.doclen;
     } else if blob_subtype == 13 {
+        // https://github.com/mongodb/mongo/blob/8af29f897d967f540c60ca8fb6f38f65e6fc9620/src/mongo/crypto/fle_field_schema.idl#L317-L336
+        let mut iter = BsonIter::new(input, off);
+        while let Some(el) = iter.next_element(input) {
+            let BsonElement{keystr, start, end} = el;
+            let bytes = &input[start..end];
+            let bson = bytes_to_bson(bytes);
+            let ejson = Some(bytes_to_ejson(bytes));
+
+            if keystr == "payload" {
+                // Create a recursive iterator.
+                println!("recursing payload ... begin");
+                let mut payload_iter = iter.recurse(input);
+                while let Some(el) = payload_iter.next_element(input) {
+                    println!("on key {} ... begin", el.keystr);
+
+                    let BsonElement{keystr, start, end} = el;
+                    let bytes = &input[start..end];
+                    let bson = bytes_to_bson(bytes);
+                    let ejson = Some(bytes_to_ejson(bytes));
+                    if keystr == "g" {
+                        let mut g_iter = payload_iter.recurse(input);
+                        while let Some(el) = g_iter.next_element(input) {
+                            let idx = el.keystr;
+                            let mut g_doc_iter = g_iter.recurse(input);
+                            while let Some(el) = g_doc_iter.next_element(input) {
+                                let BsonElement{keystr, start, end} = el;
+                                let bytes = &input[start..end];
+                                let bson = bytes_to_bson(bytes);
+                                let ejson = Some(bytes_to_ejson(bytes));
+
+                                if keystr == "d" {
+                                    let desc = match bson {
+                                        bson::Bson::Binary(b) => {
+                                            hex::encode(b.bytes)
+                                        },
+                                        _ => panic!("Unexpected non-binary for g")
+                                    };
+                                    ret.push(Item { start, end, id: format!("payload edge [{}] EDCDerivedFromDataToken", idx), ejson, desc })
+                                }
+                                else if keystr == "s" {
+                                    let desc = match bson {
+                                        bson::Bson::Binary(b) => {
+                                            hex::encode(b.bytes)
+                                        },
+                                        _ => panic!("Unexpected non-binary for g")
+                                    };
+                                    ret.push(Item { start, end, id: format!("payload edge [{}] ESCDerivedFromDataToken", idx), ejson, desc })
+                                }
+                                else if keystr == "c" {
+                                    let desc = match bson {
+                                        bson::Bson::Binary(b) => {
+                                            hex::encode(b.bytes)
+                                        },
+                                        _ => panic!("Unexpected non-binary for g")
+                                    };
+                                    ret.push(Item { start, end, id: format!("payload edge [{}] ECCDerivedFromDataToken", idx), ejson, desc })
+                                }
+                            }
+                        }
+                    } else if keystr == "e" {
+                        let desc = match bson {
+                            bson::Bson::Binary(b) => {
+                                hex::encode(b.bytes)
+                            }
+                            _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
+                        }.to_string();
+                        ret.push(Item { start, end, id: "payload.ServerDataEncryptionLevel1Token".to_string(), ejson, desc })
+                    }
+                    println!("on key ... end");
+                }
+
+                println!("recursing payload ... end");
+            }
+            else if keystr == "payloadId" {
+                let desc = format!("{}", bson.as_i32().unwrap());
+                ret.push(Item { start, end, id: "payloadId".to_string(), ejson, desc })
+            }
+            else if keystr == "firstOperator" {
+                let desc = format!("{}", bson.as_i32().unwrap());
+                ret.push(Item { start, end, id: "firstOperator".to_string(), ejson, desc })
+            }
+            else if keystr == "secondOperator" {
+                let desc = format!("{}", bson.as_i32().unwrap());
+                ret.push(Item { start, end, id: "secondOperator".to_string(), ejson, desc })
+            } else if keystr == "cm" {
+                let desc = format!("{}", bson.as_i64().unwrap());
+                ret.push(Item { start, end, id: "payload.Queryable Encryption max counter".to_string(), ejson, desc })
+            } else if keystr == "sp" {
+                let desc = format!("{}", bson.as_i64().unwrap());
+                ret.push(Item { start, end, id: "payload.Queryable Encryption sparsity".to_string(), ejson, desc })
+            } else if keystr == "pn" {
+                let desc = format!("{}", bson.as_i64().unwrap());
+                ret.push(Item { start, end, id: "payload.Queryable Encryption precision".to_string(), ejson, desc })
+            } else if keystr == "tf" {
+                let desc = format!("{}", bson.as_i32().unwrap());
+                ret.push(Item { start, end, id: "payload.Queryable Encryption trimFactor".to_string(), ejson, desc })
+            } else if keystr == "mn" {
+                ret.push(Item { start, end, id: "payload.Queryable Encryption indexMin".to_string(), ejson: ejson.clone(), desc: ejson.unwrap() })
+            } else if keystr == "mx" {
+                ret.push(Item { start, end, id: "payload.Queryable Encryption indexMax".to_string(), ejson: ejson.clone(), desc: ejson.unwrap() })
+            }
+            else {
+                panic!("unexpected field for {:?}: {}", blob_subtype, keystr);
+            }
+        }
+
+        off += iter.doclen;
+    } else if blob_subtype == 14 {
+        /*
+        * FLE2IndexedEqualityEncryptedValueV2 has the following data layout:
+        *
+        * struct FLE2IndexedEqualityEncryptedValueV2 {
+        *   uint8_t fle_blob_subtype = 14;
+        *   uint8_t S_KeyId[16];
+        *   uint8_t original_bson_type;
+        *   uint8_t ServerEncryptedValue[ServerEncryptedValue.length];
+        *   FLE2TagAndEncryptedMetadataBlock metadata;
+        * }
+        *
+        * ServerEncryptedValue :=
+        *   EncryptCTR(ServerEncryptionToken, K_KeyId || ClientEncryptedValue)
+        * ClientEncryptedValue := EncryptCBCAEAD(K_Key, clientValue, AD=K_KeyId)
+        *
+        * The MetadataBlock is ignored by libmongocrypt,
+        *   but has the following structure and a fixed size of 96 octets:
+        *
+        * struct FLE2TagAndEncryptedMetadataBlock {
+        *   uint8_t encryptedCount[32]; // EncryptCTR(countEncryptionToken,
+        *                               //            count || contentionFactor)
+        *   uint8_t tag[32];            // HMAC-SHA256(count, edcTwiceDerived)
+        *   uint8_t encryptedZeros[32]; // EncryptCTR(zerosEncryptionToken, 0*)
+        * }
+        */
+        let keyuuid = &input[off..off+16];
+        ret.push(Item { start: off, end: off+16, id: "S_KeyID".to_string(), desc: hex::encode(keyuuid), ejson: None});
+        off += 16;
+
+        let original_bson_type = input[off];
+        ret.push(Item { start: off, end: off+1, id: "OriginalBsonType".to_string(), desc: format!("{}", original_bson_type), ejson: None});
+        off += 1;
+
+        let metadata_len = 96; // encCount(32) + tag(32) + encZeros(32)
+        let ciphertext = &input[off..(input.len() - metadata_len)];
+        ret.push(Item { start: off, end: off + ciphertext.len(), id: "ServerEncryptedValue".to_string(), desc: hex::encode(ciphertext), ejson: None});
+        off += ciphertext.len();
+
+        let encrypted_count = &input[off..off + 32];
+        ret.push(Item { start: off, end: off+16, id: "encryptedCount".to_string(), desc: hex::encode(encrypted_count), ejson: None});
+        off += 32;
+
+        let tag = &input[off..off + 32];
+        ret.push(Item { start: off, end: off+16, id: "tag".to_string(), desc: hex::encode(tag), ejson: None});
+        off += 32;
+
+        let encrypted_zeros = &input[off..off + 32];
+        ret.push(Item { start: off, end: off+16, id: "encryptedZeros".to_string(), desc: hex::encode(encrypted_zeros), ejson: None});
+        off += 32;
+    } else if blob_subtype == 15 {
+        let keyuuid = &input[off..off+16];
+        ret.push(Item { start: off, end: off+16, id: "key_uuid".to_string(), desc: hex::encode(keyuuid), ejson: None});
+        off += 16;
+
+        let original_bson_type = input[off];
+        ret.push(Item { start: off, end: off+1, id: "OriginalBsonType".to_string(), desc: format!("{}", original_bson_type), ejson: None});
+        off += 1;
+
+        let edge_count = input[off];
+        ret.push(Item { start: off, end: off+1, id: "EdgeCount".to_string(), desc: format!("{}", edge_count), ejson: None});
+        off += 1;
+
+        let metadata_len = edge_count as usize * 96; // encCount(32) + tag(32) + encZeros(32)
+        let ciphertext = &input[off..(input.len() - metadata_len)];
+        ret.push(Item { start: off, end: off + ciphertext.len(), id: "ServerEncryptedValue".to_string(), desc: hex::encode(ciphertext), ejson: None});
+        off += ciphertext.len();
+
+        for i in 0..edge_count {
+            let encrypted_count = &input[off..off + 32];
+            ret.push(Item { start: off, end: off+16, id: format!("encryptedCount[{}]", i), desc: hex::encode(encrypted_count), ejson: None});
+            off += 32;
+    
+            let tag = &input[off..off + 32];
+            ret.push(Item { start: off, end: off+16, id: format!("tag[{}]", i), desc: hex::encode(tag), ejson: None});
+            off += 32;
+    
+            let encrypted_zeros = &input[off..off + 32];
+            ret.push(Item { start: off, end: off+16, id: format!("encryptedZeros[{}]", i), desc: hex::encode(encrypted_zeros), ejson: None});
+            off += 32;
+        }
+
+    } else if blob_subtype == 16 {
+        let keyuuid = &input[off..off+16];
+        ret.push(Item { start: off, end: off+16, id: "KeyUUID".to_string(), desc: hex::encode(keyuuid), ejson: None});
+        off += 16;
+
+        let original_bson_type = input[off];
+        ret.push(Item { start: off, end: off+1, id: "OriginalBsonType".to_string(), desc: format!("{}", original_bson_type), ejson: None});
+        off += 1;
+
+        let ciphertext = &input[off..];
+        ret.push(Item { start: off, end: off + ciphertext.len(), id: "Ciphertext".to_string(), desc: hex::encode(ciphertext), ejson: None});
+        off += ciphertext.len();
+    } else if blob_subtype == 17 {
+        let keyuuid = &input[off..off+16];
+        ret.push(Item { start: off, end: off+16, id: "key_uuid".to_string(), desc: hex::encode(keyuuid), ejson: None});
+        off += 16;
+
+        let original_bson_type = input[off];
+        ret.push(Item { start: off, end: off+1, id: "OriginalBsonType".to_string(), desc: format!("{}", original_bson_type), ejson: None});
+        off += 1;
+
+        let edge_count = input[off] as usize;
+        println!("{:?}", &input[off..off+4]);
+        ret.push(Item { start: off, end: off+4, id: "EdgeCount".to_string(), desc: format!("{}", edge_count), ejson: None});
+        off += 4;
+
+        println!("edge_count={}", edge_count);
+
+        let substr_tag_count = read_u32 (input, off);
+        ret.push(Item { start: off, end: off+4, id: "SubstrTagCount".to_string(), desc: format!("{}", edge_count), ejson: None});
+        off += 4;
+
+        println!("substr_tag_count={}", substr_tag_count);
+
+        let suffix_tag_count = read_u32 (input, off);
+        ret.push(Item { start: off, end: off+4, id: "SuffixTagCount".to_string(), desc: format!("{}", edge_count), ejson: None});
+        off += 4;
+
+        println!("suffix_tag_count={}", suffix_tag_count);
+
+        let metadata_block_count = 1 /* exact */ + edge_count;
+        let metadata_len = metadata_block_count * 96; // encCount(32) + tag(32) + encZeros(32)
+
+        let ciphertext = &input[off..(input.len() - metadata_len)];
+        ret.push(Item { start: off, end: off + ciphertext.len(), id: "ServerEncryptedValue".to_string(), desc: hex::encode(ciphertext), ejson: None});
+        off += ciphertext.len();
+
+        // Read exact metadata:
+        {
+            let encrypted_count = &input[off..off + 32];
+            ret.push(Item { start: off, end: off+16, id: "Exact.encryptedCount".to_string(), desc: hex::encode(encrypted_count), ejson: None});
+            off += 32;
+    
+            let tag = &input[off..off + 32];
+            ret.push(Item { start: off, end: off+16, id: "Exact.tag".to_string(), desc: hex::encode(tag), ejson: None});
+            off += 32;
+    
+            let encrypted_zeros = &input[off..off + 32];
+            ret.push(Item { start: off, end: off+16, id: "Exact.encryptedZeros".to_string(), desc: hex::encode(encrypted_zeros), ejson: None});
+            off += 32;
+        }
+
+        // Read substr metadata:
+        for i in 0..substr_tag_count {
+            let encrypted_count = &input[off..off + 32];
+            ret.push(Item { start: off, end: off+16, id: format!("Substr.encryptedCount[{}]", i), desc: hex::encode(encrypted_count), ejson: None});
+            off += 32;
+    
+            let tag = &input[off..off + 32];
+            ret.push(Item { start: off, end: off+16, id: format!("Substr.tag[{}]", i), desc: hex::encode(tag), ejson: None});
+            off += 32;
+    
+            let encrypted_zeros = &input[off..off + 32];
+            ret.push(Item { start: off, end: off+16, id: format!("Substr.encryptedZeros[{}]", i), desc: hex::encode(encrypted_zeros), ejson: None});
+            off += 32;
+        } 
+
+        // Read suffix metadata:
+        for i in 0..substr_tag_count {
+            let encrypted_count = &input[off..off + 32];
+            ret.push(Item { start: off, end: off+16, id: format!("Suffix.encryptedCount[{}]", i), desc: hex::encode(encrypted_count), ejson: None});
+            off += 32;
+    
+            let tag = &input[off..off + 32];
+            ret.push(Item { start: off, end: off+16, id: format!("Suffix.tag[{}]", i), desc: hex::encode(tag), ejson: None});
+            off += 32;
+    
+            let encrypted_zeros = &input[off..off + 32];
+            ret.push(Item { start: off, end: off+16, id: format!("Suffix.encryptedZeros[{}]", i), desc: hex::encode(encrypted_zeros), ejson: None});
+            off += 32;
+        }
+
+        // Read prefix metadata:
+        for i in 0..(edge_count - (substr_tag_count + suffix_tag_count + 1)) {
+            let encrypted_count = &input[off..off + 32];
+            ret.push(Item { start: off, end: off+16, id: format!("Prefix.encryptedCount[{}]", i), desc: hex::encode(encrypted_count), ejson: None});
+            off += 32;
+    
+            let tag = &input[off..off + 32];
+            ret.push(Item { start: off, end: off+16, id: format!("Prefix.tag[{}]", i), desc: hex::encode(tag), ejson: None});
+            off += 32;
+    
+            let encrypted_zeros = &input[off..off + 32];
+            ret.push(Item { start: off, end: off+16, id: format!("Prefix.encryptedZeros[{}]", i), desc: hex::encode(encrypted_zeros), ejson: None});
+            off += 32;
+        } 
+    } else if blob_subtype == 123 {
         // https://github.com/mongodb/mongo/blob/8af29f897d967f540c60ca8fb6f38f65e6fc9620/src/mongo/crypto/fle_field_schema.idl#L317-L336
         let mut iter = BsonIter::new(input, off);
         while let Some(el) = iter.next_element(input) {
