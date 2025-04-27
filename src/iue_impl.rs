@@ -162,6 +162,9 @@ impl BsonIter {
             println!("doc len: {}", len);
             self.off += len;
             end = self.off;
+        } else if signed_byte == 8u8 {
+            self.off += 1;
+            end = self.off;
         }
         else {
             panic!("do not know how to parse element with signed byte: {}", signed_byte);
@@ -921,8 +924,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
             ret.push(Item { start: off, end: off+16, id: format!("Prefix.encryptedZeros[{}]", i), desc: hex::encode(encrypted_zeros), ejson: None});
             off += 32;
         } 
-    } else if blob_subtype == 123 {
-        // https://github.com/mongodb/mongo/blob/8af29f897d967f540c60ca8fb6f38f65e6fc9620/src/mongo/crypto/fle_field_schema.idl#L317-L336
+    } else if blob_subtype == 18 {
         let mut iter = BsonIter::new(input, off);
         while let Some(el) = iter.next_element(input) {
             let BsonElement{keystr, start, end} = el;
@@ -930,98 +932,237 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
             let bson = bytes_to_bson(bytes);
             let ejson = Some(bytes_to_ejson(bytes));
 
-            if keystr == "payload" {
+            if keystr == "ts" {
                 // Create a recursive iterator.
                 println!("recursing payload ... begin");
-                let mut payload_iter = iter.recurse(input);
-                while let Some(el) = payload_iter.next_element(input) {
+                let mut ts_iter = iter.recurse(input);
+                while let Some(el) = ts_iter.next_element(input) {
                     println!("on key {} ... begin", el.keystr);
+                    if el.keystr == "e" {
+                        let mut e_iter = ts_iter.recurse(input);
+                        while let Some(el) = e_iter.next_element(input) {
+                            let BsonElement{keystr, start, end} = el;
+                            let bytes = &input[start..end];
+                            let bson = bytes_to_bson(bytes);
+                            let ejson = Some(bytes_to_ejson(bytes));
 
-                    let BsonElement{keystr, start, end} = el;
-                    let bytes = &input[start..end];
-                    let bson = bytes_to_bson(bytes);
-                    let ejson = Some(bytes_to_ejson(bytes));
-                    if keystr == "g" {
-                        let mut g_iter = payload_iter.recurse(input);
-                        while let Some(el) = g_iter.next_element(input) {
-                            let idx = el.keystr;
-                            let mut g_doc_iter = g_iter.recurse(input);
-                            while let Some(el) = g_doc_iter.next_element(input) {
-                                let BsonElement{keystr, start, end} = el;
-                                let bytes = &input[start..end];
-                                let bson = bytes_to_bson(bytes);
-                                let ejson = Some(bytes_to_ejson(bytes));
-
-                                if keystr == "d" {
-                                    let desc = match bson {
-                                        bson::Bson::Binary(b) => {
-                                            hex::encode(b.bytes)
-                                        },
-                                        _ => panic!("Unexpected non-binary for g")
-                                    };
-                                    ret.push(Item { start, end, id: format!("payload edge [{}] EDCDerivedFromDataToken", idx), ejson, desc })
-                                }
-                                else if keystr == "s" {
-                                    let desc = match bson {
-                                        bson::Bson::Binary(b) => {
-                                            hex::encode(b.bytes)
-                                        },
-                                        _ => panic!("Unexpected non-binary for g")
-                                    };
-                                    ret.push(Item { start, end, id: format!("payload edge [{}] ESCDerivedFromDataToken", idx), ejson, desc })
-                                }
-                                else if keystr == "c" {
-                                    let desc = match bson {
-                                        bson::Bson::Binary(b) => {
-                                            hex::encode(b.bytes)
-                                        },
-                                        _ => panic!("Unexpected non-binary for g")
-                                    };
-                                    ret.push(Item { start, end, id: format!("payload edge [{}] ECCDerivedFromDataToken", idx), ejson, desc })
-                                }
+                            if keystr == "d" {
+                                let desc = match bson {
+                                    bson::Bson::Binary(b) => {
+                                        hex::encode(b.bytes)
+                                    },
+                                    _ => panic!("Unexpected non-binary for d")
+                                };
+                                ret.push(Item { start, end, id: "EDCTextExactDerivedFromDataToken".to_string(), ejson, desc })
+                            }
+                            else if keystr == "s" {
+                                let desc = match bson {
+                                    bson::Bson::Binary(b) => {
+                                        hex::encode(b.bytes)
+                                    },
+                                    _ => panic!("Unexpected non-binary for s")
+                                };
+                                ret.push(Item { start, end, id: "ESCTextExactDerivedFromDataToken".to_string(), ejson, desc })
+                            }
+                            else if keystr == "l" {
+                                let desc = match bson {
+                                    bson::Bson::Binary(b) => {
+                                        hex::encode(b.bytes)
+                                    },
+                                    _ => panic!("Unexpected non-binary for l")
+                                };
+                                ret.push(Item { start, end, id: "ServerTextExactDerivedFromDataToken".to_string(), ejson, desc })
                             }
                         }
-                    } else if keystr == "e" {
-                        let desc = match bson {
-                            bson::Bson::Binary(b) => {
-                                hex::encode(b.bytes)
+                    } else                     if el.keystr == "s" {
+                        let mut e_iter = ts_iter.recurse(input);
+                        while let Some(el) = e_iter.next_element(input) {
+                            let BsonElement{keystr, start, end} = el;
+                            let bytes = &input[start..end];
+                            let bson = bytes_to_bson(bytes);
+                            let ejson = Some(bytes_to_ejson(bytes));
+
+                            if keystr == "d" {
+                                let desc = match bson {
+                                    bson::Bson::Binary(b) => {
+                                        hex::encode(b.bytes)
+                                    },
+                                    _ => panic!("Unexpected non-binary for d")
+                                };
+                                ret.push(Item { start, end, id: "EDCTextSubstringDerivedFromDataToken".to_string(), ejson, desc })
                             }
-                            _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
-                        }.to_string();
-                        ret.push(Item { start, end, id: "payload.ServerDataEncryptionLevel1Token".to_string(), ejson, desc })
+                            else if keystr == "s" {
+                                let desc = match bson {
+                                    bson::Bson::Binary(b) => {
+                                        hex::encode(b.bytes)
+                                    },
+                                    _ => panic!("Unexpected non-binary for s")
+                                };
+                                ret.push(Item { start, end, id: "ESCTextSubstringDerivedFromDataToken".to_string(), ejson, desc })
+                            }
+                            else if keystr == "l" {
+                                let desc = match bson {
+                                    bson::Bson::Binary(b) => {
+                                        hex::encode(b.bytes)
+                                    },
+                                    _ => panic!("Unexpected non-binary for l")
+                                };
+                                ret.push(Item { start, end, id: "ServerTextSubstringDerivedFromDataToken".to_string(), ejson, desc })
+                            }
+                        }
+                    }
+                    else                     if el.keystr == "u" {
+                        let mut e_iter = ts_iter.recurse(input);
+                        while let Some(el) = e_iter.next_element(input) {
+                            let BsonElement{keystr, start, end} = el;
+                            let bytes = &input[start..end];
+                            let bson = bytes_to_bson(bytes);
+                            let ejson = Some(bytes_to_ejson(bytes));
+
+                            if keystr == "d" {
+                                let desc = match bson {
+                                    bson::Bson::Binary(b) => {
+                                        hex::encode(b.bytes)
+                                    },
+                                    _ => panic!("Unexpected non-binary for d")
+                                };
+                                ret.push(Item { start, end, id: "EDCTextSuffixDerivedFromDataToken".to_string(), ejson, desc })
+                            }
+                            else if keystr == "s" {
+                                let desc = match bson {
+                                    bson::Bson::Binary(b) => {
+                                        hex::encode(b.bytes)
+                                    },
+                                    _ => panic!("Unexpected non-binary for s")
+                                };
+                                ret.push(Item { start, end, id: "ESCTextSuffixDerivedFromDataToken".to_string(), ejson, desc })
+                            }
+                            else if keystr == "l" {
+                                let desc = match bson {
+                                    bson::Bson::Binary(b) => {
+                                        hex::encode(b.bytes)
+                                    },
+                                    _ => panic!("Unexpected non-binary for l")
+                                };
+                                ret.push(Item { start, end, id: "ServerTextSuffixDerivedFromDataToken".to_string(), ejson, desc })
+                            }
+                        }
+                    } else                     if el.keystr == "p" {
+                        let mut e_iter = ts_iter.recurse(input);
+                        while let Some(el) = e_iter.next_element(input) {
+                            let BsonElement{keystr, start, end} = el;
+                            let bytes = &input[start..end];
+                            let bson = bytes_to_bson(bytes);
+                            let ejson = Some(bytes_to_ejson(bytes));
+                    
+                            if keystr == "d" {
+                                let desc = match bson {
+                                    bson::Bson::Binary(b) => {
+                                        hex::encode(b.bytes)
+                                    },
+                                    _ => panic!("Unexpected non-binary for d")
+                                };
+                                ret.push(Item { start, end, id: "EDCTextPrefixDerivedFromDataToken".to_string(), ejson, desc })
+                            }
+                            else if keystr == "s" {
+                                let desc = match bson {
+                                    bson::Bson::Binary(b) => {
+                                        hex::encode(b.bytes)
+                                    },
+                                    _ => panic!("Unexpected non-binary for s")
+                                };
+                                ret.push(Item { start, end, id: "ESCTextPrefixDerivedFromDataToken".to_string(), ejson, desc })
+                            }
+                            else if keystr == "l" {
+                                let desc = match bson {
+                                    bson::Bson::Binary(b) => {
+                                        hex::encode(b.bytes)
+                                    },
+                                    _ => panic!("Unexpected non-binary for l")
+                                };
+                                ret.push(Item { start, end, id: "ServerTextPrefixDerivedFromDataToken".to_string(), ejson, desc })
+                            }
+                        }
                     }
                     println!("on key ... end");
                 }
 
                 println!("recursing payload ... end");
             }
-            else if keystr == "payloadId" {
-                let desc = format!("{}", bson.as_i32().unwrap());
-                ret.push(Item { start, end, id: "payloadId".to_string(), ejson, desc })
+            else if keystr == "cf" {
+                let desc = format!("{}", bson.as_bool().unwrap());
+                ret.push(Item { start, end, id: "CaseFolding".to_string(), ejson, desc })
             }
-            else if keystr == "firstOperator" {
-                let desc = format!("{}", bson.as_i32().unwrap());
-                ret.push(Item { start, end, id: "firstOperator".to_string(), ejson, desc })
+            else if keystr == "df" {
+                let desc = format!("{}", bson.as_bool().unwrap());
+                ret.push(Item { start, end, id: "DiacriticFolding".to_string(), ejson, desc })
             }
-            else if keystr == "secondOperator" {
-                let desc = format!("{}", bson.as_i32().unwrap());
-                ret.push(Item { start, end, id: "secondOperator".to_string(), ejson, desc })
-            } else if keystr == "cm" {
-                let desc = format!("{}", bson.as_i64().unwrap());
-                ret.push(Item { start, end, id: "payload.Queryable Encryption max counter".to_string(), ejson, desc })
-            } else if keystr == "sp" {
-                let desc = format!("{}", bson.as_i64().unwrap());
-                ret.push(Item { start, end, id: "payload.Queryable Encryption sparsity".to_string(), ejson, desc })
-            } else if keystr == "pn" {
-                let desc = format!("{}", bson.as_i64().unwrap());
-                ret.push(Item { start, end, id: "payload.Queryable Encryption precision".to_string(), ejson, desc })
-            } else if keystr == "tf" {
-                let desc = format!("{}", bson.as_i32().unwrap());
-                ret.push(Item { start, end, id: "payload.Queryable Encryption trimFactor".to_string(), ejson, desc })
-            } else if keystr == "mn" {
-                ret.push(Item { start, end, id: "payload.Queryable Encryption indexMin".to_string(), ejson: ejson.clone(), desc: ejson.unwrap() })
-            } else if keystr == "mx" {
-                ret.push(Item { start, end, id: "payload.Queryable Encryption indexMax".to_string(), ejson: ejson.clone(), desc: ejson.unwrap() })
+            else if keystr == "ss" {
+                let mut ss_iter = iter.recurse(input);
+                while let Some(el) = ss_iter.next_element(input) {
+                    let BsonElement{keystr, start, end} = el;
+                    let bytes = &input[start..end];
+                    let bson = bytes_to_bson(bytes);
+                    let ejson = Some(bytes_to_ejson(bytes));
+                    if keystr == "mlen" {
+                        let desc = format!("{}", bson.as_i32().unwrap());
+                        ret.push(Item { start, end, id: "Substring Max Codelength".to_string(), ejson, desc })
+                    }
+                    else if keystr == "ub" {
+                        let desc = format!("{}", bson.as_i32().unwrap());
+                        ret.push(Item { start, end, id: "Substring Upper bound".to_string(), ejson, desc })
+                    }
+                    else if keystr == "lb" {
+                        let desc = format!("{}", bson.as_i32().unwrap());
+                        ret.push(Item { start, end, id: "Substring Lower bound".to_string(), ejson, desc })
+                    } else {
+                        panic!("Unexpected key: {}", keystr);
+                    }
+                }
+            }
+            else if keystr == "fs" {
+                let mut fs_iter = iter.recurse(input);
+                while let Some(el) = fs_iter.next_element(input) {
+                    let BsonElement{keystr, start, end} = el;
+                    let bytes = &input[start..end];
+                    let bson = bytes_to_bson(bytes);
+                    let ejson = Some(bytes_to_ejson(bytes));
+                    
+                    if keystr == "ub" {
+                        let desc = format!("{}", bson.as_i32().unwrap());
+                        ret.push(Item { start, end, id: "Suffix Upper bound".to_string(), ejson, desc })
+                    }
+                    else if keystr == "lb" {
+                        let desc = format!("{}", bson.as_i32().unwrap());
+                        ret.push(Item { start, end, id: "Suffix Lower bound".to_string(), ejson, desc })
+                    } else {
+                        panic!("Unexpected key: {}", keystr);
+                    }
+                }
+            }
+            else if keystr == "ps" {
+                let mut ps_iter = iter.recurse(input);
+                while let Some(el) = ps_iter.next_element(input) {
+                    let BsonElement{keystr, start, end} = el;
+                    let bytes = &input[start..end];
+                    let bson = bytes_to_bson(bytes);
+                    let ejson = Some(bytes_to_ejson(bytes));
+                    
+                    if keystr == "ub" {
+                        let desc = format!("{}", bson.as_i32().unwrap());
+                        ret.push(Item { start, end, id: "Prefix Upper bound".to_string(), ejson, desc })
+                    }
+                    else if keystr == "lb" {
+                        let desc = format!("{}", bson.as_i32().unwrap());
+                        ret.push(Item { start, end, id: "Prefix Lower bound".to_string(), ejson, desc })
+                    } else {
+                        panic!("Unexpected key: {}", keystr);
+                    }
+                }
+            }
+            else if keystr == "cm" {
+                let desc = format!("{}",bson.as_i64().unwrap());
+                ret.push(Item { start, end, id: "MaxContentionCounter".to_string(), ejson, desc })
             }
             else {
                 panic!("unexpected field for {:?}: {}", blob_subtype, keystr);
