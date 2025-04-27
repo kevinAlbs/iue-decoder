@@ -584,6 +584,102 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         }
 
         off += iter.doclen;
+    } else if blob_subtype == 11 {
+        let mut iter = BsonIter::new(input, off);
+        while let Some(el) = iter.next_element(input) {
+            let BsonElement{keystr, start, end} = el;
+            let bytes = &input[start..end];
+            let bson = bytes_to_bson(bytes);
+            let ejson = Some(bytes_to_ejson(bytes));
+            if keystr == "d" {
+                let desc = match bson {
+                    bson::Bson::Binary(b) => {
+                        hex::encode(b.bytes)
+                    }
+                    _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
+                }.to_string();
+                ret.push(Item { start, end, id: "EDCDerivedFromDataTokenAndCounter".to_string(), ejson, desc })
+            }
+            else if keystr == "s" {
+                let desc = match bson {
+                    bson::Bson::Binary(b) => {
+                        hex::encode(b.bytes)
+                    }
+                    _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
+                }.to_string();
+                ret.push(Item { start, end, id: "ESCDerivedFromDataTokenAndCounter".to_string(), ejson, desc })
+            }
+            else if keystr == "p" {
+                let desc = match bson {
+                    bson::Bson::Binary(b) => {
+                        hex::encode(b.bytes)
+                    }
+                    _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
+                }.to_string();
+                ret.push(Item { start, end, id: "Encrypted tokens".to_string(), ejson, desc })
+            }
+            else if keystr == "u" {
+                let desc = match bson {
+                    bson::Bson::Binary(b) => {
+                        hex::encode(b.bytes)
+                    }
+                    _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
+                }.to_string();
+                ret.push(Item { start, end, id: "IndexKeyId".to_string(), ejson, desc })
+            }
+            else if keystr == "t" {
+                let desc = format!("{}", bson.as_i32().unwrap());
+                ret.push(Item { start, end, id: "Encrypted Type".to_string(), ejson, desc })
+            }
+            else if keystr == "v" {
+                let desc = bson.into_relaxed_extjson().to_string();
+                ret.push(Item { start, end, id: "Value".to_string(), ejson, desc })
+            }
+            else if keystr == "e" {
+                let desc = match bson {
+                    bson::Bson::Binary(b) => {
+                        hex::encode(b.bytes)
+                    }
+                    _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
+                }.to_string();
+                ret.push(Item { start, end, id: "ServerDataEncryptionLevel1Token".to_string(), ejson, desc })
+            } else if keystr == "l" {
+                let desc = match bson {
+                    bson::Bson::Binary(b) => {
+                        hex::encode(b.bytes)
+                    }
+                    _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
+                }.to_string();
+                ret.push(Item { start, end, id: "ServerDerivedFromDataToken".to_string(), ejson, desc })
+            } else if keystr == "k" {
+                let desc = format!("{}", bson.as_i64().unwrap());
+                ret.push(Item { start, end, id: "Randomly sampled contention factor".to_string(), ejson, desc })
+            } else if keystr == "g" {
+                todo!();
+            } else if keystr == "b" {
+                todo!();
+            } else if keystr == "sp" {
+                let desc = format!("{}", bson.as_i64().unwrap());
+                ret.push(Item { start, end, id: "Sparsity".to_string(), ejson, desc })
+            } else if keystr == "pn" {
+                let desc = format!("{}", bson.as_i32().unwrap());
+                ret.push(Item { start, end, id: "Precision".to_string(), ejson, desc })
+            } else if keystr == "tf" {
+                let desc = format!("{}", bson.as_i32().unwrap());
+                ret.push(Item { start, end, id: "Trim Factor".to_string(), ejson, desc })
+            } else if keystr == "mn" {
+                let desc = ejson.clone().unwrap();
+                ret.push(Item { start, end, id: "Index min".to_string(), desc, ejson })
+            } else if keystr == "mx" {
+                let desc = ejson.clone().unwrap();
+                ret.push(Item { start, end, id: "Index max".to_string(), desc, ejson })
+            }
+            else {
+                panic!("unexpected field for {:?}: {}", blob_subtype, keystr);
+            }
+        }
+
+        off += iter.doclen;
     } else if blob_subtype == 12 {
         let mut iter = BsonIter::new(input, off);
         while let Some(el) = iter.next_element(input) {
