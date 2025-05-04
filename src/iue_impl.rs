@@ -872,15 +872,15 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         off += ciphertext.len();
 
         let encrypted_count = &input[off..off + 32];
-        ret.push(Item { start: off, end: off+16, id: "encryptedCount".to_string(), desc: hex::encode(encrypted_count), ejson: None});
+        ret.push(Item { start: off, end: off+32, id: "encryptedCount".to_string(), desc: hex::encode(encrypted_count), ejson: None});
         off += 32;
 
         let tag = &input[off..off + 32];
-        ret.push(Item { start: off, end: off+16, id: "tag".to_string(), desc: hex::encode(tag), ejson: None});
+        ret.push(Item { start: off, end: off+32, id: "tag".to_string(), desc: hex::encode(tag), ejson: None});
         off += 32;
 
         let encrypted_zeros = &input[off..off + 32];
-        ret.push(Item { start: off, end: off+16, id: "encryptedZeros".to_string(), desc: hex::encode(encrypted_zeros), ejson: None});
+        ret.push(Item { start: off, end: off+32, id: "encryptedZeros".to_string(), desc: hex::encode(encrypted_zeros), ejson: None});
         off += 32;
     } else if blob_subtype == 15 {
         let keyuuid = &input[off..off+16];
@@ -902,15 +902,15 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
 
         for i in 0..edge_count {
             let encrypted_count = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+16, id: format!("encryptedCount[{}]", i), desc: hex::encode(encrypted_count), ejson: None});
+            ret.push(Item { start: off, end: off+32, id: format!("encryptedCount[{}]", i), desc: hex::encode(encrypted_count), ejson: None});
             off += 32;
     
             let tag = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+16, id: format!("tag[{}]", i), desc: hex::encode(tag), ejson: None});
+            ret.push(Item { start: off, end: off+32, id: format!("tag[{}]", i), desc: hex::encode(tag), ejson: None});
             off += 32;
     
             let encrypted_zeros = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+16, id: format!("encryptedZeros[{}]", i), desc: hex::encode(encrypted_zeros), ejson: None});
+            ret.push(Item { start: off, end: off+32, id: format!("encryptedZeros[{}]", i), desc: hex::encode(encrypted_zeros), ejson: None});
             off += 32;
         }
 
@@ -964,60 +964,60 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         // Read exact metadata:
         {
             let encrypted_count = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+16, id: "Exact.encryptedCount".to_string(), desc: hex::encode(encrypted_count), ejson: None});
+            ret.push(Item { start: off, end: off+32, id: "Exact.encryptedCount".to_string(), desc: hex::encode(encrypted_count), ejson: None});
             off += 32;
     
             let tag = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+16, id: "Exact.tag".to_string(), desc: hex::encode(tag), ejson: None});
+            ret.push(Item { start: off, end: off+32, id: "Exact.tag".to_string(), desc: hex::encode(tag), ejson: None});
             off += 32;
     
             let encrypted_zeros = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+16, id: "Exact.encryptedZeros".to_string(), desc: hex::encode(encrypted_zeros), ejson: None});
+            ret.push(Item { start: off, end: off+32, id: "Exact.encryptedZeros".to_string(), desc: hex::encode(encrypted_zeros), ejson: None});
             off += 32;
         }
 
         // Read substr metadata:
         for i in 0..substr_tag_count {
             let encrypted_count = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+16, id: format!("Substr.encryptedCount[{}]", i), desc: hex::encode(encrypted_count), ejson: None});
+            ret.push(Item { start: off, end: off+32, id: format!("Substr.encryptedCount[{}]", i), desc: hex::encode(encrypted_count), ejson: None});
             off += 32;
     
             let tag = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+16, id: format!("Substr.tag[{}]", i), desc: hex::encode(tag), ejson: None});
+            ret.push(Item { start: off, end: off+32, id: format!("Substr.tag[{}]", i), desc: hex::encode(tag), ejson: None});
             off += 32;
     
             let encrypted_zeros = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+16, id: format!("Substr.encryptedZeros[{}]", i), desc: hex::encode(encrypted_zeros), ejson: None});
+            ret.push(Item { start: off, end: off+32, id: format!("Substr.encryptedZeros[{}]", i), desc: hex::encode(encrypted_zeros), ejson: None});
             off += 32;
         } 
 
         // Read suffix metadata:
         for i in 0..substr_tag_count {
             let encrypted_count = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+16, id: format!("Suffix.encryptedCount[{}]", i), desc: hex::encode(encrypted_count), ejson: None});
+            ret.push(Item { start: off, end: off+32, id: format!("Suffix.encryptedCount[{}]", i), desc: hex::encode(encrypted_count), ejson: None});
             off += 32;
     
             let tag = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+16, id: format!("Suffix.tag[{}]", i), desc: hex::encode(tag), ejson: None});
+            ret.push(Item { start: off, end: off+32, id: format!("Suffix.tag[{}]", i), desc: hex::encode(tag), ejson: None});
             off += 32;
     
             let encrypted_zeros = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+16, id: format!("Suffix.encryptedZeros[{}]", i), desc: hex::encode(encrypted_zeros), ejson: None});
+            ret.push(Item { start: off, end: off+32, id: format!("Suffix.encryptedZeros[{}]", i), desc: hex::encode(encrypted_zeros), ejson: None});
             off += 32;
         }
 
         // Read prefix metadata:
         for i in 0..(edge_count - (substr_tag_count + suffix_tag_count + 1)) {
             let encrypted_count = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+16, id: format!("Prefix.encryptedCount[{}]", i), desc: hex::encode(encrypted_count), ejson: None});
+            ret.push(Item { start: off, end: off+32, id: format!("Prefix.encryptedCount[{}]", i), desc: hex::encode(encrypted_count), ejson: None});
             off += 32;
     
             let tag = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+16, id: format!("Prefix.tag[{}]", i), desc: hex::encode(tag), ejson: None});
+            ret.push(Item { start: off, end: off+32, id: format!("Prefix.tag[{}]", i), desc: hex::encode(tag), ejson: None});
             off += 32;
     
             let encrypted_zeros = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+16, id: format!("Prefix.encryptedZeros[{}]", i), desc: hex::encode(encrypted_zeros), ejson: None});
+            ret.push(Item { start: off, end: off+32, id: format!("Prefix.encryptedZeros[{}]", i), desc: hex::encode(encrypted_zeros), ejson: None});
             off += 32;
         } 
     } else if blob_subtype == 18 {
