@@ -16,11 +16,11 @@ pub struct Item {
 #[wasm_bindgen]
 impl Item {
     #[wasm_bindgen(getter)]
-    pub fn desc(&self) -> String {
+    pub fn val(&self) -> String {
         self.val.clone()
     }
     #[wasm_bindgen(getter)]
-    pub fn id(&self) -> String {
+    pub fn key(&self) -> String {
         self.key.clone()
     }
     #[wasm_bindgen(getter)]

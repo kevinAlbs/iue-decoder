@@ -70,7 +70,7 @@
           let items = decode(textarea.value);
           view_decoded.innerHTML = "";
           items.forEach((item) => {
-            let str = `<div><span data-start='${item.start}' data-end='${item.end}' data-id='${item.id}'>id=${item.id} desc=${item.desc}`;
+            let str = `<div><span data-start='${item.start}' data-end='${item.end}' data-id='${item.key}'>id=${item.key} desc=${item.val}`;
             if (item.ejson) {
               str += `ejson=${item.ejson}`;
             }
