@@ -1,6 +1,7 @@
 use bson::{Bson, Document};
 use hex;
 use wasm_bindgen::prelude::*;
+#[allow(unused_imports)]
 use base64::prelude::*;
 
 #[derive(Debug, Clone)]
@@ -122,13 +123,11 @@ impl BsonIter {
         }
     }
     fn next_element (&mut self, input: &[u8]) -> Option<BsonElement> {
-        println!("self.off={}, stop at: {}", self.off, self.doclen + self.startoff - 1);
         if self.off == self.startoff + self.doclen - 1 {
             return None;
         }
         let start = self.off;
         let signed_byte = input[self.off];
-        println!("signed_byte={}", signed_byte);
         self.prev_signedbyte = signed_byte;
         self.off+=1;
         
@@ -1277,20 +1276,6 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
     return ret;
 }
 
-fn dump_payload (input : &[u8]) -> String {
-    let mut out = String::new();
-
-    let items = decode_payload(&input);
-    for item in items.iter() {
-        out += format!("{}={}", item.key, item.val).as_str();
-        if let Some(ejson) = &item.ejson {
-            out += format! (" ({})", ejson).as_str();
-        }
-        out += "\n";
-    }
-
-    return out;
-}
 
 #[test]
 fn test_decode0() {
