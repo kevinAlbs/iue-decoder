@@ -196,6 +196,54 @@ fn blob_subtype_to_string(blob_subtype: u8) -> &'static str {
     }
 }
 
+pub fn decode_payload_as_json (input: &[u8]) -> Option<String> {
+    let blob_subtype = input[0];
+
+    // For payloads that are BSON after subtype, return JSON string.
+    match blob_subtype_to_string(blob_subtype) {
+        // Payloads that are not BSON-based:
+        "FLE1DeterministicEncryptedValue" |
+        "FLE1RandomEncryptedValue" |
+        "FLE2UnindexedEncryptedValue" |
+        "FLE2IndexedEqualityEncryptedValue" |
+        "FLE2IndexedRangeEncryptedValue" |
+        "FLE2EqualityIndexedValueV2" |
+        "FLE2RangeIndexedValueV2" |
+        "FLE2UnindexedEncryptedValueV2" |
+        "FLE2IndexedTextEncryptedValue" => {
+            return None;
+        }
+        // Payloads that are BSON-based:
+        "FLE1EncryptionPlaceholder" |
+        "FLE2EncryptionPlaceholder" |
+        "FLE2InsertUpdatePayload" |
+        "FLE2FindEqualityPayload" |
+        "FLE2FindRangePayload" |
+        "FLE2InsertUpdatePayloadV2" |
+        "FLE2FindEqualityPayloadV2" |
+        "FLE2FindRangePayloadV2" |
+        "FLE2FindTextPayload" => {
+            let reader = &input[1..];
+            let doc = Document::from_reader(reader).expect("should read");
+            let doc_bson : Bson = doc.into();
+            let got = doc_bson.into_canonical_extjson().to_string();
+            return Some(got);
+        }
+        unknown => {
+            panic!("Unexpected subtype: {}", unknown);
+        }
+    }
+}
+
+#[test]
+fn test_decode_payload_as_json () {
+    let input= BASE64_STANDARD.decode(b"ADgAAAAQYQABAAAABWtpABAAAAAEYWFhYWFhYWFhYWFhYWFhYQJ2AAwAAAA0NTctNTUtNTQ2MgAA").expect("should decode");
+    let got = decode_payload_as_json(&input);
+    let expect = r#"{"a":{"$numberInt":"1"},"ki":{"$binary":{"base64":"YWFhYWFhYWFhYWFhYWFhYQ==","subType":"04"}},"v":"457-55-5462"}"#;
+    assert_eq!(got, Some(expect.to_string()));
+}
+
+
 pub fn decode_payload (input: &[u8]) -> Vec<Item> {
     let mut ret = Vec::<Item>::new();
     let mut off = 0;
@@ -1370,6 +1418,21 @@ fn test_bson_iter() {
     assert!(got.is_none());
 }
 
+#[cfg(test)]
+fn dump_payload (input : &[u8]) -> String {
+    let mut out = String::new();
+
+    let items = decode_payload(&input);
+    for item in items.iter() {
+        out += format!("{}={}", item.key, item.val).as_str();
+        if let Some(ejson) = &item.ejson {
+            out += format! (" ({})", ejson).as_str();
+        }
+        out += "\n";
+    }
+
+    return out;
+}
 
 #[test]
 fn test_golden_files () {

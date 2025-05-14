@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="utf-8" />
-  <title>hello-wasm example</title>
+  <title>IUE Decoder</title>
   <style type="text/css">
     * {
       font-family: monospace;
@@ -43,6 +43,20 @@
     #view-bytes {
       line-break: anywhere;
     }
+
+    #ejson {
+      overflow: hidden;
+      resize: none;
+      border: none;
+      outline: none;
+      -webkit-box-shadow: none;
+      -moz-box-shadow: none;
+      box-shadow: none;
+    }
+
+    #ejson_section {
+      display: none;
+    }
   </style>
 </head>
 
@@ -56,6 +70,10 @@
       <div id="view">
         <h1>Decoding</h1>
         <div id="view-decoded"></div>
+      </div>
+      <div id="ejson_section">
+        <h2>As Extended JSON</h2>
+        <textarea id="ejson" readonly="readonly"></textarea>
       </div>
       <div id="explain">
         <h1>Explanation</h1>
@@ -197,11 +215,13 @@
     </div> <!-- #columns -->
   </div>
   <script type="module">
-    import init, { decode } from "./pkg/iue_decoder.js";
+    import init, { decode, decode_as_json } from "./pkg/iue_decoder.js";
     init().then(() => {
       let view_bytes = document.querySelector("#view-bytes");
       let view_decoded = document.querySelector("#view-decoded");
       let textarea = document.querySelector("textarea");
+      let textarea_ejson = document.querySelector("#ejson");
+      let ejson_section = document.querySelector("#ejson_section");
 
       function do_decode() {
         let bytes = atob(textarea.value);
@@ -220,6 +240,20 @@
         });
         str += "</table>";
         view_decoded.innerHTML = str;
+
+        let ejson = decode_as_json(textarea.value);
+        if (ejson) {
+          // Prettify the JSON.
+          let ejson_pretty = JSON.stringify(JSON.parse(ejson), null, 4);
+          textarea_ejson.style.height = "0px";
+          textarea_ejson.value = ejson_pretty;
+          ejson_section.style.display = "block";
+          textarea_ejson.style.height = textarea_ejson.scrollHeight + "px";
+          window.setTimeout(() => {
+          }, 0);
+        } else {
+          ejson_section.style.display = "none";
+        }
       }
 
       textarea.addEventListener("input", do_decode);
