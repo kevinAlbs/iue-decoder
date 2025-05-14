@@ -191,7 +191,7 @@ fn blob_subtype_to_string(blob_subtype: u8) -> &'static str {
         15 => "FLE2RangeIndexedValueV2",
         16 => "FLE2UnindexedEncryptedValueV2",
         17 => "FLE2IndexedTextEncryptedValue",
-        18 => "FLE2IndexedTextEncryptedValue",
+        18 => "FLE2FindTextPayload",
         _ => panic!("{} has no string name. Please add one.", blob_subtype),
     }
 }

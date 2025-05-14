@@ -1,4 +1,4 @@
-BlobSubtype=18 (FLE2IndexedTextEncryptedValue)
+BlobSubtype=18 (FLE2FindTextPayload)
 EDCTextExactDerivedFromDataToken=280edab4190763d1f4183d383f8830773859c3a74a13161094e6fd44e7390fed ("d":{"$binary":{"base64":"KA7atBkHY9H0GD04P4gwdzhZw6dKExYQlOb9ROc5D+0=","subType":"00"}})
 ESCTextExactDerivedFromDataToken=c3c8980ed11e63ec199104bc9a0889322c9eb80d00eee0b5148dc83f7e78adb7 ("s":{"$binary":{"base64":"w8iYDtEeY+wZkQS8mgiJMiyeuA0A7uC1FI3IP354rbc=","subType":"00"}})
 ServerTextExactDerivedFromDataToken=8773322a2b9e6c08886db6bc65b46ffdd64651e8a49400a9e55ff5bc550d45bf ("l":{"$binary":{"base64":"h3MyKiuebAiIbba8ZbRv/dZGUeiklACp5V/1vFUNRb8=","subType":"00"}})
