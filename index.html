@@ -35,6 +35,14 @@
       font-weight: bold;
       padding-right: 1em;
     }
+
+    #blob-reference p {
+      margin: 0;
+    }
+
+    #view-bytes {
+      line-break: anywhere;
+    }
   </style>
 </head>
 
@@ -51,124 +59,139 @@
       </div>
       <div id="explain">
         <h1>Explanation</h1>
-        <h2>FLE1EncryptionPlaceholder (0)</h2>
-        <table>
-          <tr>
-            <td>Created by</td>
-            <td>mongocryptd / crypt_shared</td>
-          </tr>
-          <tr>
-            <td>Intended for</td>
-            <td>libmongocrypt</td>
-          </tr>
-          <tr>
-            <td>References</td>
-            <td><a
-                href='https://github.com/mongodb/specifications/blob/9d0d3f0042a8cf5faeb47ae7765716151bfca9ef/source/bson-binary-encrypted/binary-encrypted.md'>Spec</a>
-              <a
-                href='https://github.com/mongodb/mongo/blob/6ec0bf4dd0c59fdfcacaaa36d3b7cb374da3e243/src/mongo/crypto/fle_field_schema.idl#L134-L159'>Server
-                IDL</a> <a
-                href='https://github.com/mongodb/libmongocrypt/blob/4e42cc36f2ff0cc059d5d49ae010d88fb6a82064/src/mongocrypt-marking.c#L47-L143'>libmongocrypt</a>
-            </td>
-          </tr>
-          <tr>
-            <td>Server Versions</td>
-            <td>Added in 4.2</td>
-          </tr>
-        </table>
-        <h2>FLE1DeterministicEncryptedValue (1)</h2>
-        <table>
-          <tr>
-            <td>Created by</td>
-            <td>libmongocrypt</td>
-          </tr>
-          <tr>
-            <td>Intended for</td>
-            <td>mongod / mongos</td>
-          </tr>
-          <tr>
-            <td>References</td>
-            <td><a
-                href='https://github.com/mongodb/specifications/blob/9d0d3f0042a8cf5faeb47ae7765716151bfca9ef/source/bson-binary-encrypted/binary-encrypted.md'>Spec</a>
-              <a
-                href='https://github.com/mongodb/libmongocrypt/blob/4e42cc36f2ff0cc059d5d49ae010d88fb6a82064/src/mongocrypt-ciphertext-private.h#L24-L36'>libmongocrypt</a>
-            </td>
-          </tr>
-          <tr>
-            <td>Server Versions</td>
-            <td>Added in 4.2</td>
-          </tr>
-        </table>
-        <h2>FLE1RandomEncryptedValue (2)</h2>
-        <table>
-          <tr>
-            <td>Created by</td>
-            <td>libmongocrypt</td>
-          </tr>
-          <tr>
-            <td>Intended for</td>
-            <td>mongod / mongos</td>
-          </tr>
-          <tr>
-            <td>References</td>
-            <td><a
-                href='https://github.com/mongodb/specifications/blob/9d0d3f0042a8cf5faeb47ae7765716151bfca9ef/source/bson-binary-encrypted/binary-encrypted.md'>Spec</a>
-              <a
-                href='https://github.com/mongodb/libmongocrypt/blob/4e42cc36f2ff0cc059d5d49ae010d88fb6a82064/src/mongocrypt-ciphertext-private.h#L24-L36'>libmongocrypt</a>
-            </td>
-          </tr>
-          <tr>
-            <td>Server Versions</td>
-            <td>Added in 4.2</td>
-          </tr>
-        </table>
-        <h2>FLE2EncryptionPlaceholder (3)</h2>
-        <table>
-          <tr>
-            <td>Created by</td>
-            <td>mongocryptd / crypt_shared</td>
-          </tr>
-          <tr>
-            <td>Intended for</td>
-            <td>libmongocrypt</td>
-          </tr>
-          <tr>
-            <td>References</td>
-            <td><a
-                href='https://github.com/mongodb/mongo/blob/6ec0bf4dd0c59fdfcacaaa36d3b7cb374da3e243/src/mongo/crypto/fle_field_schema.idl#L161-L198'>Server
-                IDL</a> <a
-                href='https://github.com/mongodb/libmongocrypt/blob/4e42cc36f2ff0cc059d5d49ae010d88fb6a82064/src/mc-fle2-encryption-placeholder-private.h#L203-L228'>libmongocrypt</a>
-            </td>
-          </tr>
-          <tr>
-            <td>Server Versions</td>
-            <td>Added in 4.2</td>
-          </tr>
-        </table>
-        <h2>FLE2InsertUpdatePayload (4)</h2>
-        <table>
-          <tr>
-            <td>Created by</td>
-            <td>libmongocrypt</td>
-          </tr>
-          <tr>
-            <td>Intended for</td>
-            <td>mongocryptd / crypt_shared</td>
-          </tr>
-          <tr>
-            <td>References</td>
-            <td><a
-                href='https://github.com/mongodb/mongo/blob/6ec0bf4dd0c59fdfcacaaa36d3b7cb374da3e243/src/mongo/crypto/fle_field_schema.idl#L161-L198'>Server
-                IDL</a> <a
-                href='https://github.com/mongodb/libmongocrypt/blob/4e42cc36f2ff0cc059d5d49ae010d88fb6a82064/src/mc-fle2-insert-update-payload-private.h#L27-L76'>libmongocrypt</a>
-            </td>
-          </tr>
-          <tr>
-            <td>Server Versions</td>
-            <td>Added in 6.0. Removed in 7.0 (<a href='https://jira.mongodb.org/browse/SERVER-73303'>SERVER-73303</a>)
-            </td>
-          </tr>
-        </table>
+        FLE1 payloads are for CSFLE. FLE2 payloads are for QE. See <a
+          href="https://github.com/mongodb/specifications/blob/9d0d3f0042a8cf5faeb47ae7765716151bfca9ef/source/client-side-encryption/client-side-encryption.md#naming">Naming</a>.
+        <!-- Generate the table below with gen-docs.py -->
+        <!--noformat-->
+        <div id='blob-reference'>
+          <h2>FLE1EncryptionPlaceholder (0)</h2>
+          <p><a href='#' data-load='ADgAAAAQYQABAAAABWtpABAAAAAEYWFhYWFhYWFhYWFhYWFhYQJ2AAwAAAA0NTctNTUtNTQ2MgAA'>Load Example</a></p>
+          <table>
+          <tr><td>Created by</td><td>mongocryptd / crypt_shared</td></tr>
+          <tr><td>Intended for</td><td>libmongocrypt</td></tr>
+          <tr><td>References</td><td><a href='https://github.com/mongodb/specifications/blob/9d0d3f0042a8cf5faeb47ae7765716151bfca9ef/source/bson-binary-encrypted/binary-encrypted.md'>Spec</a> <a href='https://github.com/mongodb/mongo/blob/6ec0bf4dd0c59fdfcacaaa36d3b7cb374da3e243/src/mongo/crypto/fle_field_schema.idl#L134-L159'>Server IDL</a> <a href='https://github.com/mongodb/libmongocrypt/blob/4e42cc36f2ff0cc059d5d49ae010d88fb6a82064/src/mongocrypt-marking.c#L47-L143'>libmongocrypt</a></td></tr>
+          </table>
+          <h2>FLE1DeterministicEncryptedValue (1)</h2>
+          <p><a href='#' data-load='AQAAAAAAAAAAAAAAAAAAAAACwj+3zkv2VM+aTfk60RqhXq6a/77WlLwu/BxXFkL7EppGsju/m8f0x5kBDD3EZTtGALGXlym5jnpZAoSIkswHoA=='>Load Example</a></p>
+          <table>
+          <tr><td>Created by</td><td>libmongocrypt</td></tr>
+          <tr><td>Intended for</td><td>mongod / mongos</td></tr>
+          <tr><td>References</td><td><a href='https://github.com/mongodb/specifications/blob/9d0d3f0042a8cf5faeb47ae7765716151bfca9ef/source/bson-binary-encrypted/binary-encrypted.md'>Spec</a> <a href='https://github.com/mongodb/libmongocrypt/blob/4e42cc36f2ff0cc059d5d49ae010d88fb6a82064/src/mongocrypt-ciphertext-private.h#L24-L36'>libmongocrypt</a></td></tr>
+          </table>
+          <h2>FLE1RandomEncryptedValue (2)</h2>
+          <p><a href='#' data-load='Am2IfShB4k/NqP8INteqCxUCEikm46tQNyXYxnUWcZ2J7mXfvZFHvSfQwQoXgUPt9I2Q1h3aN1K4mkgOOfk7jaOGZtPRW3iVjaeRjUh9Xw3M+Q=='>Load Example</a></p>
+          <table>
+          <tr><td>Created by</td><td>libmongocrypt</td></tr>
+          <tr><td>Intended for</td><td>mongod / mongos</td></tr>
+          <tr><td>References</td><td><a href='https://github.com/mongodb/specifications/blob/9d0d3f0042a8cf5faeb47ae7765716151bfca9ef/source/bson-binary-encrypted/binary-encrypted.md'>Spec</a> <a href='https://github.com/mongodb/libmongocrypt/blob/4e42cc36f2ff0cc059d5d49ae010d88fb6a82064/src/mongocrypt-ciphertext-private.h#L24-L36'>libmongocrypt</a></td></tr>
+          </table>
+          <h2>FLE2EncryptionPlaceholder (3)</h2>
+          <p><a href='#' data-load='A1gAAAAQdAACAAAAEGEAAgAAAAVraQAQAAAABBI0VngSNJh2EjQSNFZ4kBIFa3UAEAAAAAQSNFZ4EjSYdhI0EjRWeJASEHYAQOIBABJjbQAAAAAAAAAAAAA='>Load Example</a></p>
+          <table>
+          <tr><td>Created by</td><td>mongocryptd / crypt_shared</td></tr>
+          <tr><td>Intended for</td><td>libmongocrypt</td></tr>
+          <tr><td>References</td><td><a href='https://github.com/mongodb/mongo/blob/6ec0bf4dd0c59fdfcacaaa36d3b7cb374da3e243/src/mongo/crypto/fle_field_schema.idl#L161-L198'>Server IDL</a> <a href='https://github.com/mongodb/libmongocrypt/blob/4e42cc36f2ff0cc059d5d49ae010d88fb6a82064/src/mc-fle2-encryption-placeholder-private.h#L203-L228'>libmongocrypt</a></td></tr>
+          </table>
+          <h2>FLE2InsertUpdatePayload (4)</h2>
+          <p><a href='#' data-load='BG0BAAAFZAAgAAAAAIv6VUIIdmtHdpgZoJ3jI1ml1C2PRpbVhDZ+KLANYotkBXMAIAAAAAAYeqduU82pqo68MSIuOE8SLoa31j+2KEgNUJmOmMevGQVjACAAAAAAMMRH1V+7hgaihhDEhR70GldDZgQ8CDNasgLlI3T2EPUFcABQAAAAAI01AUQR/WmNQM9F0bCmYSUnlfWt/0VMG0TraZFQBTpVJ4WjJlaDS2hrCIVnlugzmeOisFFkx4ZvLGx5TXrwbJ0dRT011j1BxQHERAugUqeOBXUAEAAAAAQi4yMnD+xGdb8i/okx28IyEHQAAgAAAAV2AEkAAAAAIuMjJw/sRnW/Iv6JMdvCMnuKUnAoATZAj+50R9EyQIlO9G2HAEjOvfPb6g7OWYgFs1ogqzjXxeZDlSN1GfjQW3+nBMA6+KlrYgVlACAAAAAAOTxFECgSgD/PKSpuTxZx1vWmUY/E0XeZdG6Mk3Mmj9QA'>Load Example</a></p>
+          <table>
+          <tr><td>Created by</td><td>libmongocrypt</td></tr>
+          <tr><td>Intended for</td><td>mongocryptd / crypt_shared</td></tr>
+          <tr><td>References</td><td><a href='https://github.com/mongodb/mongo/blob/443b0594b28476e3f78e0c5923fcebf2c7abd19b/src/mongo/crypto/fle_field_schema.idl#L232-L272'>Server IDL</a> <a href='https://github.com/mongodb/libmongocrypt/blob/4e42cc36f2ff0cc059d5d49ae010d88fb6a82064/src/mc-fle2-insert-update-payload-private.h#L27-L76'>libmongocrypt</a></td></tr>
+          </table>
+          <h2>FLE2FindEqualityPayload (5)</h2>
+          <p><a href='#' data-load='BbEAAAAFZAAgAAAAAE8KGPgq7h3n9nH5lfHcia8wtOTLwGkZNLBesb6PULqbBXMAIAAAAACq0558QyD3c3jkR5k0Zc9UpQK8ByhXhtn2d1xVQnuJ3AVjACAAAAAA1003zUWGwD4zVZ0KeihnZOthS3V6CEHUfnJZcIYHefIFZQAgAAAAAOuac/eRLYakKX6B0vZ1r3QodOQFfjqJD+xlGiPu4/PsEmNtAAAAAAAAAAAAAA=='>Load Example</a></p>
+          <table>
+          <tr><td>Created by</td><td>libmongocrypt</td></tr>
+          <tr><td>Intended for</td><td>mongod / mongos</td></tr>
+          <tr><td>References</td><td><a href='https://github.com/mongodb/mongo/blob/443b0594b28476e3f78e0c5923fcebf2c7abd19b/src/mongo/crypto/fle_field_schema.idl#L334-L359'>Server IDL</a> <a href='https://github.com/mongodb/libmongocrypt/blob/4e42cc36f2ff0cc059d5d49ae010d88fb6a82064/src/mc-fle2-find-equality-payload-private.h#L24-L30'>libmongocrypt</a></td></tr>
+          </table>
+          <h2>FLE2UnindexedEncryptedValue (6)</h2>
+          <p><a href='#' data-load='BnjG/o5QT0VhmxzQeAbrhfwCfGsYmaa/rfV/k1h2jkJTh7S5xtIMxFzyK0lSIZenQJCepp5KrRY3dAGup9shwz9pOUF+cAh8KXuA'>Load Example</a></p>
+          <table>
+          <tr><td>Created by</td><td>libmongocrypt</td></tr>
+          <tr><td>Intended for</td><td>mongod / mongos</td></tr>
+          <tr><td>References</td><td><a href='https://github.com/mongodb/libmongocrypt/blob/4e42cc36f2ff0cc059d5d49ae010d88fb6a82064/src/mc-fle2-payload-uev-private.h#L24-L44'>libmongocrypt</a></td></tr>
+          </table>
+          <h2>FLE2IndexedEqualityEncryptedValue (7)</h2>
+          <p><a href='#' data-load='B0ObNHrTR056kS3MSoY7omkCML5HhwnpVS7w9I8BkoUo16wWK9ito9wVIOYgq0/D5Gd/HtiwEJ3x3Uy1Qkgn6Nb2NrYz1LAKeBdK3/EmeUVOjAkWFXu9SnyCu071b1DRFrKw2eYhetsQILsyNiZfzuS8gJ5W7ArF5AjaVY71eS83kkIBhn39cAXB9dhOhb8hMV+iTJD/jQNGNlw/TMo436e5DspINqJ7ZE4tS/NKlP6F0nV6LW/hWHUe3ClCUhDH/OdkcwrYQ8gMYN9jdT4NCzB+DT8RO6lnV+Y='>Load Example</a></p>
+          <table>
+          <tr><td>Created by</td><td>mongod / mongos</td></tr>
+          <tr><td>Intended for</td><td>libmongocrypt</td></tr>
+          <tr><td>References</td><td><a href='https://github.com/mongodb/libmongocrypt/blob/4e42cc36f2ff0cc059d5d49ae010d88fb6a82064/src/mc-fle2-payload-iev-private.h#L38-L66'>libmongocrypt</a></td></tr>
+          </table>
+          <h2>FLE2IndexedRangeEncryptedValue (9)</h2>
+          <p><a href='#' data-load='CVkwKtDmKE4wmHqxJleVlkgQ6M6Fzuh68tGrCjKyAHq9M6tNsvO6BY8gnwWXlI/fHpDV/AjlPQA/bB4zz+GPulalwDYVuIKRecthdXAThkOVyIoJ1DnEqk2b3V7mZ00ZU8DIivKqTPtJWVfgCkUGufk/q0Y2zQ74jXvaHCSfJ2XzwHfmKCuEaKDqiPYGhMN1QqSmA/EJ9phTeASi8tLz4pq9dZx0Ad0xDUikxQWeZsr1oKn3RABKB0c3+SXie+tLp56KKkUvQQdv+iK+d77dFhRWgGXX4n53oyJrd8sinsc/BM7mdMxk/8B+0gQr2j0so7f2fqfnqz4szX1w7+ecYda2H1etE3gXODcTIrsu/p4V3ReKwkFgtF60z+ho2WW0F3PVKMgNieWNYuEYVRA8afm6b08YjJoHFGl43zL5Tm+eHCdj5fZ9eWdF8Ym1tV9W9ZPhtLYyFXKi/6q9nLSBJLxnQpiiTmvIuszMbMLBVN9xPMc7gLPw1KqXhHmLXla5o47nrDsfg9GwURGybTmGQ8GCyKrodD3hqwAyUd9ket+jwF6GOqATJEv839qHW06M6vtYJP1g7quCxAzHPlhC9bN3yixY2QWGkJCE9KiEA+wKq4tRkhKXvGCXHLwE+Xv6KJDD+dqbyArjgFZfU6b/o0NJVqsucNgfC5hoeKtK9ihoMvpCiY59J6idiwyYUhnONHJEaRQbyVempbAG4e4H5DbXGLWTLHyAJrgG3S9gXgT3AbdlU4Rq/XYX/ZIzBdkOt8d4T4UohPxvxLoKcO05RjTd3AhskhtQ6NPhvHp302egfwSAcUblJ5sYFdubs8109LRW8fr9GfU4tN0QSMudcxU6BgGldaSPHgzEqj9ne5MvGAA+62ZxNwBW4qBAyiUEut/J0fEm3sZ+kIJEyMo4KuG8s4zaBwDPRQ6BvzODmkfloiFXEQmeLPgaRQBdCw3gLmMlbRJ2mxQ4d6oW/REkqDZTxlmm9jnu/z5DrDgJc3kugHIib8BHe/MgUinestjj97jCwRLJw+iJ+Roo/HWL288nKGY/stokjHUY4BY0k1T77R+54kyeMPX9lL/jGbfoozJCDiSSxIBUbY6mDwoEtpmIyzrG/arT+cL/NmQW+CvgfQCQr+nk2+BdUmK1C8uqYJbBKmZHOYh5ugla0dDqP0ybLsiBKr2qUsG5nOq+/wdZe/K5Z7Xjv4vI2xCYdbTaIL6XfhM1cqV46B3tar4h4JVmNiglVuqC37h4gzhuA93/5ZB4e2E//Mnv5LKa9NCgV8/B2DLLt2FQRSfdQeiMUUjwd7VJTXAfhRiO3eGH171QBPGqdak9ek65WLvvHboyCYm/Wa42UTkIGq56kX6IBk/APgZCx76Kc5GdW4pT4dmUp9rwtq8CjmTA'>Load Example</a></p>
+          <table>
+          <tr><td>Created by</td><td>mongod / mongos</td></tr>
+          <tr><td>Intended for</td><td>libmongocrypt</td></tr>
+          <tr><td>References</td><td><a href='https://github.com/mongodb/libmongocrypt/blob/4e42cc36f2ff0cc059d5d49ae010d88fb6a82064/src/mc-fle2-payload-iev-private.h#L68-L84'>libmongocrypt</a></td></tr>
+          </table>
+          <h2>FLE2FindRangePayload (10)</h2>
+          <p><a href='#' data-load='CvEEAAADcGF5bG9hZADBBAAABGcAhQQAAAMwAH0AAAAFZAAgAAAAAKfR876j77BmHaWxFf7Px/B695Rn7JAN3upnEpaEqFT+BXMAIAAAAACXqoD16/Q8tNDRR7gP222DxV0SBOSZ4bqsxYILo8a/0wVjACAAAAAAFAp92kX7YI+mD8PNYqm41Kd3P11+jOfwGIyrjlrQBE0AAzEAfQAAAAVkACAAAAAAlpFiajzOojYERTN1LCni1VGk+ZVax/J2Rg3dQeHpMy4FcwAgAAAAAB4PqYOdB4uVsL2LSxWATz5EfrL573g4lDS0nQ+9uVVKBWMAIAAAAAApSFhK3ie+9R9s2A8nYTv1JyJVnRnNvOhnacqvh7A0uwADMgB9AAAABWQAIAAAAACEoDdR4neyFrwxEjf97csBWYgbGT2GqTlMff0Iww8S3wVzACAAAAAAO5caRM9/ghnb+v1iiAJSMEWFEURCoJ+/krcDaFXpJA8FYwAgAAAAADxh2OAhuAHS0y2k2gBHhmaf/QMM/bkmHOY57/h/hw5VAAMzAH0AAAAFZAAgAAAAACFSn9LbHIGoJEDxQm+l/VhB1Qp2sDHEDDH/n/c8F8n8BXMAIAAAAACBO4bhRYkAW8TOvy65UHl7YNTK+4vge++76cn1G8/dugVjACAAAAAAMfZI0QJuIjEP+2h7hMyADl63DLtAWXwO7ku694tjjwsAAzQAfQAAAAVkACAAAAAAGj22/+aFr+8l9CLnrDZ5NhzCgz++msotwjPmSF9OM+gFcwAgAAAAAC9cqJy///jAYzdKgtwFSx75wY+WX47DOOpPRbkb78OPBWMAIAAAAAB01fpGEYLy8nDFXUft76z/+9Z9KA2EiRcAQ97zr0u9lwADNQB9AAAABWQAIAAAAADbZ5AD/5OvYukqwD1ouIm1JCicqneF8Irq6sPhgRe20wVzACAAAAAAdP03rg0E4wfRAUdu6SaaQOZi4JxoX9bUAFENSuB38wQFYwAgAAAAAHyp8UBmXIbVgejUieOKpQHrfbHrGGRUnlaj59ojnBwjAAM2AH0AAAAFZAAgAAAAACSbt5cVtVjP7BGAWK09HRCwAyV9It3zsFV0xaSVTkCYBXMAIAAAAAB2oDy5xJX9PzwQxDkT/mZcL4L8MEH2iAQkbFRJX8uDnwVjACAAAAAA3zhqKXElNWg9l3x3N3W77heSWp/LAPfkhWYIj30yyt8AAzcAfQAAAAVkACAAAAAAPLjGwQ+DBcHE6XSH+knrIFTqq1zCgbltUvFW7wQwib0FcwAgAAAAAOfj/lP3YxmHoZBYlp60ZOnxx38JpMeougcNBUoWQfl0BWMAIAAAAABda0UNwhIuLtWxf8CqnFZLZTBCkgAj5eyyYhQd3W+hOgADOAB9AAAABWQAIAAAAADAg4r1xbwXaXEYn9Xc0gZ/ZTDqKRye52R4+M9yw1JoMwVzACAAAAAAPgpORYCcoS+SKCMf2IC1b7sHYFG0LtmWJmTlogsl81YFYwAgAAAAAB59AUYXsSm/LEx1Q35fiU44J+25wrdxZs1DrZCc+kRBAAAFZQAgAAAAAOuac/eRLYakKX6B0vZ1r3QodOQFfjqJD+xlGiPu4/PsEmNtAAAAAAAAAAAAABBwYXlsb2FkSWQA0gQAABBmaXJzdE9wZXJhdG9yAAEAAAAA'>Load Example</a></p>
+          <table>
+          <tr><td>Created by</td><td>libmongocrypt</td></tr>
+          <tr><td>Intended for</td><td>mongod / mongos</td></tr>
+          <tr><td>References</td><td><a href='https://github.com/mongodb/mongo/blob/443b0594b28476e3f78e0c5923fcebf2c7abd19b/src/mongo/crypto/fle_field_schema.idl#L447-L466'>Server IDL</a> <a href='https://github.com/mongodb/libmongocrypt/blob/4e42cc36f2ff0cc059d5d49ae010d88fb6a82064/src/mc-fle2-find-range-payload-private.h#L38-L53'>libmongocrypt</a></td></tr>
+          </table>
+          <h2>FLE2InsertUpdatePayloadV2 (11)</h2>
+          <p><a href='#' data-load='C18BAAAFZAAgAAAAAHb62aV7+mqmaGcotPLdG3KP7S8diFwWMLM/5rYtqLrEBXMAIAAAAAAVJ6OWHRv3OtCozHpt3ZzfBhaxZirLv3B+G8PuaaO4EgVwADAAAAAAx0PWdXaep4jV5cRA2yQN+ULLwjv8e++oMonpfGOGs9BZ0uqPP7waiwZSwHsDx57+BXUAEAAAAAQSNFZ4EjSYdhI0EjRWeJASEHQAAgAAAAV2AFAAAAAAq83vqxI0mHYSNBI0VniQEkzZZBBDgeZh+h+gXEmOrSHYikH9u4e644rfZY9N9UQR4h76qKAmcbo43utRcXMQy+FXXIxSuNntFHZHTcNJhJoFZQAgAAAAAOuac/eRLYakKX6B0vZ1r3QodOQFfjqJD+xlGiPu4/PsBWwAIAAAAABpn2zcb7jOd/FK3F45nBxnLU6HOMwZzmGOZ0w35v/DqRJrAAAAAAAAAAAAAA=='>Load Example</a></p>
+          <table>
+          <tr><td>Created by</td><td>libmongocrypt</td></tr>
+          <tr><td>Intended for</td><td>mongod / mongos</td></tr>
+          <tr><td>References</td><td><a href='https://github.com/10gen/mongo/blob/31715bfe7e87f2908670654745cbf2df3db1796e/src/mongo/crypto/fle_field_schema.idl#L326-L404'>Server IDL</a> <a href='https://github.com/mongodb/libmongocrypt/blob/4e42cc36f2ff0cc059d5d49ae010d88fb6a82064/src/mc-fle2-insert-update-payload-private-v2.h#L54-L94'>libmongocrypt</a></td></tr>
+          </table>
+          <h2>FLE2FindEqualityPayloadV2 (12)</h2>
+          <p><a href='#' data-load='DIkAAAAFZAAgAAAAAPGmZcUzdE/FPILvRSyAScGvZparGI2y9rJ/vSBxgCujBXMAIAAAAACi1RjmndKqgnXy7xb22RzUbnZl1sOZRXPOC0KcJkAxmQVsACAAAAAApJtKPW4+o9B7gAynNLL26jtlB4+hq5TXResijcYet8USY20AAAAAAAAAAAAA'>Load Example</a></p>
+          <table>
+          <tr><td>Created by</td><td>libmongocrypt</td></tr>
+          <tr><td>Intended for</td><td>mongod / mongos</td></tr>
+          <tr><td>References</td><td><a href='https://github.com/10gen/mongo/blob/31715bfe7e87f2908670654745cbf2df3db1796e/src/mongo/crypto/fle_field_schema.idl#L406-L426'>Server IDL</a> <a href='https://github.com/mongodb/libmongocrypt/blob/4e42cc36f2ff0cc059d5d49ae010d88fb6a82064/src/mc-fle2-find-equality-payload-private-v2.h#L24-L29'>libmongocrypt</a></td></tr>
+          </table>
+          <h2>FLE2FindRangePayloadV2 (13)</h2>
+          <p><a href='#' data-load='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'>Load Example</a></p>
+          <table>
+          <tr><td>Created by</td><td>libmongocrypt</td></tr>
+          <tr><td>Intended for</td><td>mongod / mongos</td></tr>
+          <tr><td>References</td><td><a href='https://github.com/10gen/mongo/blob/31715bfe7e87f2908670654745cbf2df3db1796e/src/mongo/crypto/fle_field_schema.idl#L458-L505'>Server IDL</a> <a href='https://github.com/mongodb/libmongocrypt/blob/4e42cc36f2ff0cc059d5d49ae010d88fb6a82064/src/mc-fle2-find-range-payload-private-v2.h#L36-L59'>libmongocrypt</a></td></tr>
+          </table>
+          <h2>FLE2EqualityIndexedValueV2 (14)</h2>
+          <p><a href='#' data-load='DhI0VngSNJh2EjQSNFZ4kBICFdoqcJBSkbiltLY0cy2tK2fj2LZsAu9PPZkUBWJ7e15oUGLjb1dDuIkOoC/bzGcgLarCTPPDtfZGbJ4/q+tDtmB+ubnLNxk+YXbGgERLQ0FP6alrZDpFuRs7G1ynlmo2gXQFMd3ykgzZpkDQLt8Har+HqOMbt7Gv14IZx08k+lONvmjnufpC7fkoytxJW1FGDQw7MXTfAbDosZhF2osYivHKZ6qiPoKDF+RMsjfjYo923p7eGUMhzZRwot8LaSOu'>Load Example</a></p>
+          <table>
+          <tr><td>Created by</td><td>mongod / mongos</td></tr>
+          <tr><td>Intended for</td><td>libmongocrypt</td></tr>
+          <tr><td>References</td><td><a href='https://github.com/mongodb/libmongocrypt/blob/4e42cc36f2ff0cc059d5d49ae010d88fb6a82064/src/mc-fle2-payload-iev-private-v2.h#L42-L62'>libmongocrypt</a></td></tr>
+          </table>
+          <h2>FLE2RangeIndexedValueV2 (15)</h2>
+          <p><a href='#' data-load='D6vN76sSNJh2EjQSNFZ4kBIQCKONPDzoIPJR6V3HiKEKizlmRU6wZ6BdgJWukp2SMCmnw1/ELG4J47sD0GavvaCbFwIxVipDqB0uGsY8VQZCKq/cWAE8YX90+1POSLR+ABjGqfWO8M7x78VrDWiHmSc/0b7olL3nZD8ozT01iUqxI3dOQVvJLVW72IhfZbFkvJRvGH0bBaIuwfyk6wit1RIUAzWFDWtGMlo4lZ08kpzhe0KUjyG7UKLg6yxf7DfdBV3bmiuFt+Xj8l1jx2kcYSyITXrB1Qqgkkumu6672WRLabi2SloAxuCfXmnvRuqLF5DEQ7fvAeE8tl8aSJ2pKKRVAbP3bwRsoJm91ErM7WVcJcTrTCR/lnAW8MmNjJCjSB56cgi91Q1s/XfeCgvNsiAexzTBKdNJSqw7RtSlsCwXhYSYSpbA9ohG5Z4Hx9eK5Eyi2+HEgqjq/8RPaVcqljVRuUxnIMxkBwu64H1UsoSxnQRGCs6sjO3UqhHupmckY2hOaod0gHsqRDUxOj6gYLzqx/egyCTMI+FKG8hN19MnKE2H3yv/PahY3uFM9FOnn9RXcKYtqixaj95WS4/nyAaVTDdrsJ8sWjZeq0EziVk31wYCAsZwgYp9Pu6Ur1JAhNwRkSs4O2CSbePsY8VZkWEG54ONaP9JZG3yidA3McUoyMvaNWlYTqWZc8nZMYjSqgfxgjrM0S8tEyyuwK4EEV6ez8pOxE+0JTgtyZdhrSztcljVITX6p3I/nuD6yWNpdRYdkK6QmVlMAm+OX7T6igIpu9dzYxJpeBD3b+ioXAXDSy6cYOamVyO+d+RgWSXT+ficAY2eUicHrsXZBgfReZiTXVqpQGNAi5HnI6f+UjeKqK7YsAw7TVLDFvNzgsFKH/OgoUIH3m2z6JFD8OcqF1ufFXsH5H54JLAzIIQZOBVztxuMqEkteFUxUIWOLw3uw3K8mZCv43QZYFvZcPTrN37qY6fTVxl375vFpJXCCpd4R8Dg4Q+JGrTk3UKcVoA4WkoQq9UTNMnOhesLhOt4M1igJwWjlZNM4E2iduXoP+gJ9l9tckybx0yjxJ2qCJyzz8sFv5m2tSHDELv6PXGxphhQnRYznnDsgJeAGh6KXqtuLJP4sUf8VjxFXaGD0TYx3WvRvmnQLCWfKnG+fr0slKl83Q=='>Load Example</a></p>
+          <table>
+          <tr><td>Created by</td><td>mongod / mongos</td></tr>
+          <tr><td>Intended for</td><td>libmongocrypt</td></tr>
+          <tr><td>References</td><td><a href='https://github.com/mongodb/libmongocrypt/blob/4e42cc36f2ff0cc059d5d49ae010d88fb6a82064/src/mc-fle2-payload-iev-private-v2.h#L65-L74'>libmongocrypt</a></td></tr>
+          </table>
+          <h2>FLE2UnindexedEncryptedValueV2 (16)</h2>
+          <p><a href='#' data-load='EKvN76sSNJh2EjQSNFZ4kBICUH8j3oVCIjE3koejjIwxHF/nVP95ymiPNUPKskdjx55vK0SasqFyS4LxjZ6fQbzZSoMHPwdmR5otQl9HcMjAcg=='>Load Example</a></p>
+          <table>
+          <tr><td>Created by</td><td>libmongocrypt</td></tr>
+          <tr><td>Intended for</td><td>mongod / mongos</td></tr>
+          <tr><td>References</td><td><a href='https://github.com/mongodb/libmongocrypt/blob/4e42cc36f2ff0cc059d5d49ae010d88fb6a82064/src/mc-fle2-payload-uev-v2-private.h#L24-L44'>libmongocrypt</a></td></tr>
+          </table>
+          <h2>FLE2IndexedTextEncryptedValue (17)</h2>
+          <p><a href='#' data-load='ERI0VngSNJh2EjQSNFZ4kBICBQAAAAIAAAABAAAAZqAy0bSOXpYYlpKQxCYMoJiPnn1LGwTohBSMPC1+G93bEjHAlofOenlBB9n92xusO/oky0LQKXwWrUQGlgeGvr+a6dcJziqJgr94tT5e5FYQdipids631+ctrY6L6zV9NLwbMs5kBPPjnJf9uGsHfXDIaJb6Mp+vMCmhQBL+S3Q9ImfZi4iOkAbGgwOcGhNHuvGOUPAnBLFGv8AYz0GlV1KBX1PVeVxmrQ7S8r3n9kcdoLfv/KT+ITaV8qFqub4TZnj/kp9PB3sAlngv1Kw8KWu/Kv8lIKylWFz6jI0U1IHFcB6LLGhLJVkR18PhoPGpPXW4mU9vdiEJG9Bi2GxDmsDQg2sw4MnSTtgNIzoJ70QfPh8ItSXJ0mgrI+QyvG9YXeTAqznIfkyws6Y+Xqh4wQ5wWsxMWRJvhiU2zNeWg9MYubWD8j2lcTJE5M/57I+6WhKtu7dRP/AwRYak9M++MBSkIZF5p4YYz4iQgCYrS5Z4b7c9Syqyw5q1oJNNmzEGUU2UwHKWvmy9mvU7Re5FB8kjzcIwd5p1wzdy33uISqiY056xvhCODyhdzSqi8OKd2HoEh22275uI5DOOelby31JnznTSreIHj8XEwtLTQem/qSGRLido/+f4H9AqP8Jqd0rfMyK6EaedeL+Cd5yiiEVjtLLX2whPoSnOmztiiCEBFUrqzKPyYVhzzySnLPOaeRpDQix5xlCXEtzNqhYyMiot/wCkSM6wuYkYzRJ0/ug6fDPBpA/xdpP3jXhbM0vc'>Load Example</a></p>
+          <table>
+          <tr><td>Created by</td><td>mongod / mongos</td></tr>
+          <tr><td>Intended for</td><td>libmongocrypt</td></tr>
+          <tr><td>References</td><td><a href='https://github.com/mongodb/libmongocrypt/blob/4e42cc36f2ff0cc059d5d49ae010d88fb6a82064/src/mc-fle2-payload-iev-private-v2.h#L81-L102'>libmongocrypt</a></td></tr>
+          </table>
+          <h2>FLE2FindTextPayload (18)</h2>
+          <p><a href='#' data-load='Er0AAAADdHMAhQAAAANlAH0AAAAFZAAgAAAAACgO2rQZB2PR9Bg9OD+IMHc4WcOnShMWEJTm/UTnOQ/tBXMAIAAAAADDyJgO0R5j7BmRBLyaCIkyLJ64DQDu4LUUjcg/fnittwVsACAAAAAAh3MyKiuebAiIbba8ZbRv/dZGUeiklACp5V/1vFUNRb8AABJjbQArAAAAAAAAAAhjZgABCGRmAAADcHMAFQAAABB1YgAUAAAAEGxiAAIAAAAAAA=='>Load Example</a></p>
+          <table>
+          <tr><td>Created by</td><td>libmongocrypt</td></tr>
+          <tr><td>Intended for</td><td>mongod / mongos</td></tr>
+          <tr><td>References</td><td><a href='https://github.com/10gen/mongo/blob/31715bfe7e87f2908670654745cbf2df3db1796e/src/mongo/crypto/fle_field_schema.idl#L815-L850'>Server IDL</a> <a href='https://github.com/mongodb/libmongocrypt/blob/4e42cc36f2ff0cc059d5d49ae010d88fb6a82064/src/mc-fle2-find-text-payload-private.h#L59-L91'>libmongocrypt</a></td></tr>
+          </table>
+          </div> <!-- #blob-reference -->
+        <!--noformat-->
 
       </div>
     </div> <!-- #columns -->
@@ -199,7 +222,6 @@
         view_decoded.innerHTML = str;
       }
 
-
       textarea.addEventListener("input", do_decode);
 
       view_decoded.addEventListener("mouseover", (e) => {
@@ -219,8 +241,18 @@
         for (let i = start; i < end; i++) {
           document.querySelector(`[data-byte-index="${i}"]`).classList.add("highlighted");
         }
-
       });
+
+      document.querySelectorAll("[data-load]").forEach((el) => {
+        console.log("adding event listener")
+        el.addEventListener("click", (e) => {
+          e.preventDefault();
+          textarea.value = e.target.getAttribute("data-load");
+          do_decode();
+          window.scrollTo(0, 0);
+          return false;
+        })
+      })
 
       do_decode();
     });
