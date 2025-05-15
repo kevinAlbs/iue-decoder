@@ -9,7 +9,8 @@
       font-family: monospace;
     }
 
-    .highlighted {
+    span.highlighted,
+    td.highlighted span {
       background: rgb(165, 255, 188);
     }
 
@@ -235,11 +236,40 @@
         let items = decode(textarea.value);
         let str = "<table>";
         items.forEach((item) => {
-          str += `<tr><td>${item.key}</td><td data-start='${item.start}' data-end='${item.end}' data-id='${item.key}'>${item.val}`;
-          str += "</td></tr>";
+          str += `<tr><td>${item.key}</td><td data-start='${item.start}' data-end='${item.end}' data-id='${item.key}'><span>${item.val}</span></td></tr>`;
         });
         str += "</table>";
         view_decoded.innerHTML = str;
+
+        document.querySelectorAll("[data-start]").forEach((el) => {
+          function highlight() {
+            // Remove existing highlights:
+            document.querySelectorAll(".highlighted").forEach((el) => {
+              el.classList.remove("highlighted");
+            });
+
+            // Highlight decoded element and byte span:
+            el.classList.add("highlighted");
+            const start = parseInt(el.getAttribute("data-start"));
+            const end = parseInt(el.getAttribute("data-end"));
+            for (let i = start; i < end; i++) {
+              document.querySelector(`[data-byte-index="${i}"]`).classList.add("highlighted");
+            }
+          }
+
+          function unhighlight() {
+            el.classList.remove("highlighted");
+            const start = parseInt(el.getAttribute("data-start"));
+            const end = parseInt(el.getAttribute("data-end"));
+            for (let i = start; i < end; i++) {
+              document.querySelector(`[data-byte-index="${i}"]`).classList.remove("highlighted");
+            }
+          }
+
+          el.addEventListener("mousemove", highlight);
+          el.addEventListener("mouseover", highlight);
+          el.addEventListener("mouseout", unhighlight);
+        })
 
         let ejson = decode_as_json(textarea.value);
         if (ejson) {
@@ -256,29 +286,7 @@
         }
       }
 
-      textarea.addEventListener("input", do_decode);
-
-      view_decoded.addEventListener("mouseover", (e) => {
-        if (!e.target.getAttribute("data-start")) {
-          return;
-        }
-
-        // Remove existing highlights:
-        document.querySelectorAll(".highlighted").forEach((el) => {
-          el.classList.remove("highlighted");
-        });
-
-        // Highlight decoded element and byte span:
-        e.target.classList.add("highlighted");
-        const start = parseInt(e.target.getAttribute("data-start"));
-        const end = parseInt(e.target.getAttribute("data-end"));
-        for (let i = start; i < end; i++) {
-          document.querySelector(`[data-byte-index="${i}"]`).classList.add("highlighted");
-        }
-      });
-
       document.querySelectorAll("[data-load]").forEach((el) => {
-        console.log("adding event listener")
         el.addEventListener("click", (e) => {
           e.preventDefault();
           textarea.value = e.target.getAttribute("data-load");
