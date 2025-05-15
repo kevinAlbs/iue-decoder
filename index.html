@@ -288,6 +288,8 @@
         }
       }
 
+      textarea.addEventListener("input", do_decode);
+
       document.querySelectorAll("[data-load]").forEach((el) => {
         el.addEventListener("click", (e) => {
           e.preventDefault();
