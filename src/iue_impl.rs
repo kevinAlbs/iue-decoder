@@ -192,7 +192,34 @@ fn blob_subtype_to_string(blob_subtype: u8) -> &'static str {
         16 => "FLE2UnindexedEncryptedValueV2",
         17 => "FLE2IndexedTextEncryptedValue",
         18 => "FLE2FindTextPayload",
-        _ => panic!("{} has no string name. Please add one.", blob_subtype),
+        _ => panic!("Unknown blob subtype: {}", blob_subtype),
+    }
+}
+
+fn bson_type_to_string (bson_type: u8) -> &'static str {
+    match bson_type {
+        1 => "double",
+        2 => "string",
+        3 => "document",
+        4 => "array",
+        5 => "binary",
+        6 => "undefined",
+        7 => "objectid",
+        8 => "bool",
+        9 => "date",
+        10 => "null",
+        11 => "regex",
+        12 => "dbPointer",
+        13 => "javascript",
+        14 => "symbol",
+        15 => "javascriptWithScope",
+        16 => "int32",
+        17 => "timestamp",
+        18 => "int64",
+        19 => "decimal128",
+        255 => "minKey",
+        127 => "maxKey",
+        _ => panic!("Unknown BSON type: {}", bson_type),
     }
 }
 
@@ -296,7 +323,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         off += 16;
 
         let original_bson_type = input[off];
-        ret.push(Item { start: off, end: off+1, key: "OriginalBsonType".to_string(), val: format!("{}", original_bson_type), ejson: None});
+        ret.push(Item { start: off, end: off+1, key: "OriginalBsonType".to_string(), val: format!("{} ({})", original_bson_type, bson_type_to_string(original_bson_type)), ejson: None});
         off += 1;
 
         let ciphertext = &input[off..];
@@ -308,7 +335,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         off += 16;
 
         let original_bson_type = input[off];
-        ret.push(Item { start: off, end: off+1, key: "OriginalBsonType".to_string(), val: format!("{}", original_bson_type), ejson: None});
+        ret.push(Item { start: off, end: off+1, key: "OriginalBsonType".to_string(), val: format!("{} ({})", original_bson_type, bson_type_to_string(original_bson_type)), ejson: None});
         off += 1;
 
         let ciphertext = &input[off..];
@@ -505,7 +532,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         off += 16;
 
         let original_bson_type = input[off];
-        ret.push(Item { start: off, end: off+1, key: "OriginalBsonType".to_string(), val: format!("{}", original_bson_type), ejson: None});
+        ret.push(Item { start: off, end: off+1, key: "OriginalBsonType".to_string(), val: format!("{} ({})", original_bson_type, bson_type_to_string(original_bson_type)), ejson: None});
         off += 1;
 
         let ciphertext = &input[off..];
@@ -517,7 +544,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         off += 16;
 
         let original_bson_type = input[off];
-        ret.push(Item { start: off, end: off+1, key: "OriginalBsonType".to_string(), val: format!("{}", original_bson_type), ejson: None});
+        ret.push(Item { start: off, end: off+1, key: "OriginalBsonType".to_string(), val: format!("{} ({})", original_bson_type, bson_type_to_string(original_bson_type)), ejson: None});
         off += 1;
 
         let ciphertext = &input[off..];
@@ -529,7 +556,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         off += 16;
 
         let original_bson_type = input[off];
-        ret.push(Item { start: off, end: off+1, key: "OriginalBsonType".to_string(), val: format!("{}", original_bson_type), ejson: None});
+        ret.push(Item { start: off, end: off+1, key: "OriginalBsonType".to_string(), val: format!("{} ({})", original_bson_type, bson_type_to_string(original_bson_type)), ejson: None});
         off += 1;
 
         let ciphertext = &input[off..];
@@ -910,7 +937,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         off += 16;
 
         let original_bson_type = input[off];
-        ret.push(Item { start: off, end: off+1, key: "OriginalBsonType".to_string(), val: format!("{}", original_bson_type), ejson: None});
+        ret.push(Item { start: off, end: off+1, key: "OriginalBsonType".to_string(), val: format!("{} ({})", original_bson_type, bson_type_to_string(original_bson_type)), ejson: None});
         off += 1;
 
         let metadata_len = 96; // encCount(32) + tag(32) + encZeros(32)
@@ -935,7 +962,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         off += 16;
 
         let original_bson_type = input[off];
-        ret.push(Item { start: off, end: off+1, key: "OriginalBsonType".to_string(), val: format!("{}", original_bson_type), ejson: None});
+        ret.push(Item { start: off, end: off+1, key: "OriginalBsonType".to_string(), val: format!("{} ({})", original_bson_type, bson_type_to_string(original_bson_type)), ejson: None});
         off += 1;
 
         let edge_count = input[off];
@@ -967,7 +994,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         off += 16;
 
         let original_bson_type = input[off];
-        ret.push(Item { start: off, end: off+1, key: "OriginalBsonType".to_string(), val: format!("{}", original_bson_type), ejson: None});
+        ret.push(Item { start: off, end: off+1, key: "OriginalBsonType".to_string(), val: format!("{} ({})", original_bson_type, bson_type_to_string(original_bson_type)), ejson: None});
         off += 1;
 
         let ciphertext = &input[off..];
@@ -979,7 +1006,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         off += 16;
 
         let original_bson_type = input[off];
-        ret.push(Item { start: off, end: off+1, key: "OriginalBsonType".to_string(), val: format!("{}", original_bson_type), ejson: None});
+        ret.push(Item { start: off, end: off+1, key: "OriginalBsonType".to_string(), val: format!("{} ({})", original_bson_type, bson_type_to_string(original_bson_type)), ejson: None});
         off += 1;
 
         let edge_count = input[off] as usize;

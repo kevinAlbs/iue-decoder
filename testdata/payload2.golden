@@ -1,4 +1,4 @@
 BlobSubtype=2 (FLE1RandomEncryptedValue)
 KeyUUID=6d887d2841e24fcda8ff0836d7aa0b15
-OriginalBsonType=2
+OriginalBsonType=2 (string)
 Ciphertext=122926e3ab503725d8c67516719d89ee65dfbd9147bd27d0c10a178143edf48d90d61dda3752b89a480e39f93b8da38666d3d15b78958da7918d487d5f0dccf9

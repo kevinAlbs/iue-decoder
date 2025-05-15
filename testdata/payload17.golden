@@ -1,6 +1,6 @@
 BlobSubtype=17 (FLE2IndexedTextEncryptedValue)
 key_uuid=12345678123498761234123456789012
-OriginalBsonType=2
+OriginalBsonType=2 (string)
 EdgeCount=5
 SubstrTagCount=5
 SuffixTagCount=5
