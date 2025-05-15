@@ -66,14 +66,13 @@
     <h1>In-Use Encryption Payload Decoder</h1>
     <p>Tool to decode payloads for MongoDB In-Use Encryption (IUE): Client-Side Field Level Encryption (CSFLE) and
       Queryable Encryption (QE). <a href="https://github.com/kevinAlbs/iue-decoder">GitHub</a></p>
-    <textarea
-      placeholder="Enter payload as base64">AQAAAAAAAAAAAAAAAAAAAAACwj+3zkv2VM+aTfk60RqhXq6a/77WlLwu/BxXFkL7EppGsju/m8f0x5kBDD3EZTtGALGXlym5jnpZAoSIkswHoA==</textarea>
+    <textarea placeholder="Enter payload as base64"></textarea>
     <h1>Bytes</h1>
-    <div id="view-bytes"></div>
+    <div id="view-bytes">(Enter payload above)</div>
     <div id="columns">
       <div id="view">
         <h1>Decoding</h1>
-        <div id="view-decoded"></div>
+        <div id="view-decoded">(Enter payload above)</div>
       </div>
       <div id="ejson_section">
         <h2>As Extended JSON</h2>
@@ -298,8 +297,6 @@
           return false;
         })
       })
-
-      do_decode();
     });
 
   </script>
