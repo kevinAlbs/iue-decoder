@@ -302,7 +302,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
             } else if keystr == "ki" {
                 let desc = match bson {
                     bson::Bson::Binary(b) => {
-                        hex::encode(b.bytes)
+                        hex::encode_upper(b.bytes)
                     },
                     _ => panic!("Unexpected non-binary for 'ki")
                 };
@@ -319,7 +319,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         off += iter.doclen;
     } else if blob_subtype == 1 {
         let keyuuid = &input[off..off+16];
-        ret.push(Item { start: off, end: off+16, key: "KeyUUID".to_string(), val: hex::encode(keyuuid), ejson: None});
+        ret.push(Item { start: off, end: off+16, key: "KeyUUID".to_string(), val: hex::encode_upper(keyuuid), ejson: None});
         off += 16;
 
         let original_bson_type = input[off];
@@ -327,11 +327,11 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         off += 1;
 
         let ciphertext = &input[off..];
-        ret.push(Item { start: off, end: off + ciphertext.len(), key: "Ciphertext".to_string(), val: hex::encode(ciphertext), ejson: None});
+        ret.push(Item { start: off, end: off + ciphertext.len(), key: "Ciphertext".to_string(), val: hex::encode_upper(ciphertext), ejson: None});
         off += ciphertext.len();
     } else if blob_subtype == 2 {
         let keyuuid = &input[off..off+16];
-        ret.push(Item { start: off, end: off+16, key: "KeyUUID".to_string(), val: hex::encode(keyuuid), ejson: None});
+        ret.push(Item { start: off, end: off+16, key: "KeyUUID".to_string(), val: hex::encode_upper(keyuuid), ejson: None});
         off += 16;
 
         let original_bson_type = input[off];
@@ -339,7 +339,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         off += 1;
 
         let ciphertext = &input[off..];
-        ret.push(Item { start: off, end: off + ciphertext.len(), key: "Ciphertext".to_string(), val: hex::encode(ciphertext), ejson: None});
+        ret.push(Item { start: off, end: off + ciphertext.len(), key: "Ciphertext".to_string(), val: hex::encode_upper(ciphertext), ejson: None});
         off += ciphertext.len();
     } else if blob_subtype == 3 {
         let mut iter = BsonIter::new(input, off);
@@ -373,7 +373,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
             } else if keystr == "ki" {
                 let desc = match bson {
                     bson::Bson::Binary(b) => {
-                        hex::encode(b.bytes)
+                        hex::encode_upper(b.bytes)
                     },
                     _ => panic!("Unexpected non-binary for 'ki")
                 };
@@ -382,7 +382,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
             } else if keystr == "ku" {
                 let desc = match bson {
                     bson::Bson::Binary(b) => {
-                        hex::encode(b.bytes)
+                        hex::encode_upper(b.bytes)
                     },
                     _ => panic!("Unexpected non-binary for 'ku")
                 };
@@ -408,7 +408,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
             if keystr == "d" {
                 let desc = match bson {
                     bson::Bson::Binary(b) => {
-                        hex::encode(b.bytes)
+                        hex::encode_upper(b.bytes)
                     }
                     _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
                 }.to_string();
@@ -417,7 +417,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
             else if keystr == "s" {
                 let desc = match bson {
                     bson::Bson::Binary(b) => {
-                        hex::encode(b.bytes)
+                        hex::encode_upper(b.bytes)
                     }
                     _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
                 }.to_string();
@@ -426,7 +426,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
             else if keystr == "c" {
                 let desc = match bson {
                     bson::Bson::Binary(b) => {
-                        hex::encode(b.bytes)
+                        hex::encode_upper(b.bytes)
                     }
                     _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
                 }.to_string();
@@ -435,7 +435,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
             else if keystr == "p" {
                 let desc = match bson {
                     bson::Bson::Binary(b) => {
-                        hex::encode(b.bytes)
+                        hex::encode_upper(b.bytes)
                     }
                     _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
                 }.to_string();
@@ -444,7 +444,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
             else if keystr == "u" {
                 let desc = match bson {
                     bson::Bson::Binary(b) => {
-                        hex::encode(b.bytes)
+                        hex::encode_upper(b.bytes)
                     }
                     _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
                 }.to_string();
@@ -461,7 +461,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
             else if keystr == "e" {
                 let desc = match bson {
                     bson::Bson::Binary(b) => {
-                        hex::encode(b.bytes)
+                        hex::encode_upper(b.bytes)
                     }
                     _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
                 }.to_string();
@@ -483,7 +483,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
             if keystr == "d" {
                 let desc = match bson {
                     bson::Bson::Binary(b) => {
-                        hex::encode(b.bytes)
+                        hex::encode_upper(b.bytes)
                     }
                     _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
                 }.to_string();
@@ -492,7 +492,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
             else if keystr == "s" {
                 let desc = match bson {
                     bson::Bson::Binary(b) => {
-                        hex::encode(b.bytes)
+                        hex::encode_upper(b.bytes)
                     }
                     _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
                 }.to_string();
@@ -501,7 +501,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
             else if keystr == "c" {
                 let desc = match bson {
                     bson::Bson::Binary(b) => {
-                        hex::encode(b.bytes)
+                        hex::encode_upper(b.bytes)
                     }
                     _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
                 }.to_string();
@@ -514,7 +514,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
             else if keystr == "e" {
                 let desc = match bson {
                     bson::Bson::Binary(b) => {
-                        hex::encode(b.bytes)
+                        hex::encode_upper(b.bytes)
                     }
                     _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
                 }.to_string();
@@ -528,7 +528,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         off += iter.doclen;
     } else if blob_subtype == 6 {
         let keyuuid = &input[off..off+16];
-        ret.push(Item { start: off, end: off+16, key: "KeyUUID".to_string(), val: hex::encode(keyuuid), ejson: None});
+        ret.push(Item { start: off, end: off+16, key: "KeyUUID".to_string(), val: hex::encode_upper(keyuuid), ejson: None});
         off += 16;
 
         let original_bson_type = input[off];
@@ -536,11 +536,11 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         off += 1;
 
         let ciphertext = &input[off..];
-        ret.push(Item { start: off, end: off + ciphertext.len(), key: "Ciphertext".to_string(), val: hex::encode(ciphertext), ejson: None});
+        ret.push(Item { start: off, end: off + ciphertext.len(), key: "Ciphertext".to_string(), val: hex::encode_upper(ciphertext), ejson: None});
         off += ciphertext.len();
     } else if blob_subtype == 7 {
         let keyuuid = &input[off..off+16];
-        ret.push(Item { start: off, end: off+16, key: "S_KeyID".to_string(), val: hex::encode(keyuuid), ejson: None});
+        ret.push(Item { start: off, end: off+16, key: "S_KeyID".to_string(), val: hex::encode_upper(keyuuid), ejson: None});
         off += 16;
 
         let original_bson_type = input[off];
@@ -548,11 +548,11 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         off += 1;
 
         let ciphertext = &input[off..];
-        ret.push(Item { start: off, end: off + ciphertext.len(), key: "InnerEncrypted".to_string(), val: hex::encode(ciphertext), ejson: None});
+        ret.push(Item { start: off, end: off + ciphertext.len(), key: "InnerEncrypted".to_string(), val: hex::encode_upper(ciphertext), ejson: None});
         off += ciphertext.len();
     } else if blob_subtype == 9 {
         let keyuuid = &input[off..off+16];
-        ret.push(Item { start: off, end: off+16, key: "key_uuid".to_string(), val: hex::encode(keyuuid), ejson: None});
+        ret.push(Item { start: off, end: off+16, key: "key_uuid".to_string(), val: hex::encode_upper(keyuuid), ejson: None});
         off += 16;
 
         let original_bson_type = input[off];
@@ -560,7 +560,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         off += 1;
 
         let ciphertext = &input[off..];
-        ret.push(Item { start: off, end: off + ciphertext.len(), key: "InnerEncrypted".to_string(), val: hex::encode(ciphertext), ejson: None});
+        ret.push(Item { start: off, end: off + ciphertext.len(), key: "InnerEncrypted".to_string(), val: hex::encode_upper(ciphertext), ejson: None});
         off += ciphertext.len();
     } else if blob_subtype == 10 {
         // https://github.com/mongodb/mongo/blob/8af29f897d967f540c60ca8fb6f38f65e6fc9620/src/mongo/crypto/fle_field_schema.idl#L317-L336
@@ -596,7 +596,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                                 if keystr == "d" {
                                     let desc = match bson {
                                         bson::Bson::Binary(b) => {
-                                            hex::encode(b.bytes)
+                                            hex::encode_upper(b.bytes)
                                         },
                                         _ => panic!("Unexpected non-binary for g")
                                     };
@@ -605,7 +605,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                                 else if keystr == "s" {
                                     let desc = match bson {
                                         bson::Bson::Binary(b) => {
-                                            hex::encode(b.bytes)
+                                            hex::encode_upper(b.bytes)
                                         },
                                         _ => panic!("Unexpected non-binary for g")
                                     };
@@ -614,7 +614,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                                 else if keystr == "c" {
                                     let desc = match bson {
                                         bson::Bson::Binary(b) => {
-                                            hex::encode(b.bytes)
+                                            hex::encode_upper(b.bytes)
                                         },
                                         _ => panic!("Unexpected non-binary for g")
                                     };
@@ -625,7 +625,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                     } else if keystr == "e" {
                         let desc = match bson {
                             bson::Bson::Binary(b) => {
-                                hex::encode(b.bytes)
+                                hex::encode_upper(b.bytes)
                             }
                             _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
                         }.to_string();
@@ -668,7 +668,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
             if keystr == "d" {
                 let desc = match bson {
                     bson::Bson::Binary(b) => {
-                        hex::encode(b.bytes)
+                        hex::encode_upper(b.bytes)
                     }
                     _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
                 }.to_string();
@@ -677,7 +677,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
             else if keystr == "s" {
                 let desc = match bson {
                     bson::Bson::Binary(b) => {
-                        hex::encode(b.bytes)
+                        hex::encode_upper(b.bytes)
                     }
                     _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
                 }.to_string();
@@ -686,7 +686,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
             else if keystr == "p" {
                 let desc = match bson {
                     bson::Bson::Binary(b) => {
-                        hex::encode(b.bytes)
+                        hex::encode_upper(b.bytes)
                     }
                     _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
                 }.to_string();
@@ -695,7 +695,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
             else if keystr == "u" {
                 let desc = match bson {
                     bson::Bson::Binary(b) => {
-                        hex::encode(b.bytes)
+                        hex::encode_upper(b.bytes)
                     }
                     _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
                 }.to_string();
@@ -712,7 +712,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
             else if keystr == "e" {
                 let desc = match bson {
                     bson::Bson::Binary(b) => {
-                        hex::encode(b.bytes)
+                        hex::encode_upper(b.bytes)
                     }
                     _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
                 }.to_string();
@@ -720,7 +720,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
             } else if keystr == "l" {
                 let desc = match bson {
                     bson::Bson::Binary(b) => {
-                        hex::encode(b.bytes)
+                        hex::encode_upper(b.bytes)
                     }
                     _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
                 }.to_string();
@@ -764,7 +764,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
             if keystr == "d" {
                 let desc = match bson {
                     bson::Bson::Binary(b) => {
-                        hex::encode(b.bytes)
+                        hex::encode_upper(b.bytes)
                     }
                     _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
                 }.to_string();
@@ -773,7 +773,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
             else if keystr == "s" {
                 let desc = match bson {
                     bson::Bson::Binary(b) => {
-                        hex::encode(b.bytes)
+                        hex::encode_upper(b.bytes)
                     }
                     _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
                 }.to_string();
@@ -782,7 +782,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
             else if keystr == "l" {
                 let desc = match bson {
                     bson::Bson::Binary(b) => {
-                        hex::encode(b.bytes)
+                        hex::encode_upper(b.bytes)
                     }
                     _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
                 }.to_string();
@@ -832,7 +832,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                                 if keystr == "d" {
                                     let desc = match bson {
                                         bson::Bson::Binary(b) => {
-                                            hex::encode(b.bytes)
+                                            hex::encode_upper(b.bytes)
                                         },
                                         _ => panic!("Unexpected non-binary for g")
                                     };
@@ -841,7 +841,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                                 else if keystr == "s" {
                                     let desc = match bson {
                                         bson::Bson::Binary(b) => {
-                                            hex::encode(b.bytes)
+                                            hex::encode_upper(b.bytes)
                                         },
                                         _ => panic!("Unexpected non-binary for g")
                                     };
@@ -850,7 +850,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                                 else if keystr == "c" {
                                     let desc = match bson {
                                         bson::Bson::Binary(b) => {
-                                            hex::encode(b.bytes)
+                                            hex::encode_upper(b.bytes)
                                         },
                                         _ => panic!("Unexpected non-binary for g")
                                     };
@@ -861,7 +861,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                     } else if keystr == "e" {
                         let desc = match bson {
                             bson::Bson::Binary(b) => {
-                                hex::encode(b.bytes)
+                                hex::encode_upper(b.bytes)
                             }
                             _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
                         }.to_string();
@@ -933,7 +933,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         * }
         */
         let keyuuid = &input[off..off+16];
-        ret.push(Item { start: off, end: off+16, key: "S_KeyID".to_string(), val: hex::encode(keyuuid), ejson: None});
+        ret.push(Item { start: off, end: off+16, key: "S_KeyID".to_string(), val: hex::encode_upper(keyuuid), ejson: None});
         off += 16;
 
         let original_bson_type = input[off];
@@ -942,23 +942,23 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
 
         let metadata_len = 96; // encCount(32) + tag(32) + encZeros(32)
         let ciphertext = &input[off..(input.len() - metadata_len)];
-        ret.push(Item { start: off, end: off + ciphertext.len(), key: "ServerEncryptedValue".to_string(), val: hex::encode(ciphertext), ejson: None});
+        ret.push(Item { start: off, end: off + ciphertext.len(), key: "ServerEncryptedValue".to_string(), val: hex::encode_upper(ciphertext), ejson: None});
         off += ciphertext.len();
 
         let encrypted_count = &input[off..off + 32];
-        ret.push(Item { start: off, end: off+32, key: "encryptedCount".to_string(), val: hex::encode(encrypted_count), ejson: None});
+        ret.push(Item { start: off, end: off+32, key: "encryptedCount".to_string(), val: hex::encode_upper(encrypted_count), ejson: None});
         off += 32;
 
         let tag = &input[off..off + 32];
-        ret.push(Item { start: off, end: off+32, key: "tag".to_string(), val: hex::encode(tag), ejson: None});
+        ret.push(Item { start: off, end: off+32, key: "tag".to_string(), val: hex::encode_upper(tag), ejson: None});
         off += 32;
 
         let encrypted_zeros = &input[off..off + 32];
-        ret.push(Item { start: off, end: off+32, key: "encryptedZeros".to_string(), val: hex::encode(encrypted_zeros), ejson: None});
+        ret.push(Item { start: off, end: off+32, key: "encryptedZeros".to_string(), val: hex::encode_upper(encrypted_zeros), ejson: None});
         off += 32;
     } else if blob_subtype == 15 {
         let keyuuid = &input[off..off+16];
-        ret.push(Item { start: off, end: off+16, key: "key_uuid".to_string(), val: hex::encode(keyuuid), ejson: None});
+        ret.push(Item { start: off, end: off+16, key: "key_uuid".to_string(), val: hex::encode_upper(keyuuid), ejson: None});
         off += 16;
 
         let original_bson_type = input[off];
@@ -971,26 +971,26 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
 
         let metadata_len = edge_count as usize * 96; // encCount(32) + tag(32) + encZeros(32)
         let ciphertext = &input[off..(input.len() - metadata_len)];
-        ret.push(Item { start: off, end: off + ciphertext.len(), key: "ServerEncryptedValue".to_string(), val: hex::encode(ciphertext), ejson: None});
+        ret.push(Item { start: off, end: off + ciphertext.len(), key: "ServerEncryptedValue".to_string(), val: hex::encode_upper(ciphertext), ejson: None});
         off += ciphertext.len();
 
         for i in 0..edge_count {
             let encrypted_count = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+32, key: format!("encryptedCount[{}]", i), val: hex::encode(encrypted_count), ejson: None});
+            ret.push(Item { start: off, end: off+32, key: format!("encryptedCount[{}]", i), val: hex::encode_upper(encrypted_count), ejson: None});
             off += 32;
     
             let tag = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+32, key: format!("tag[{}]", i), val: hex::encode(tag), ejson: None});
+            ret.push(Item { start: off, end: off+32, key: format!("tag[{}]", i), val: hex::encode_upper(tag), ejson: None});
             off += 32;
     
             let encrypted_zeros = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+32, key: format!("encryptedZeros[{}]", i), val: hex::encode(encrypted_zeros), ejson: None});
+            ret.push(Item { start: off, end: off+32, key: format!("encryptedZeros[{}]", i), val: hex::encode_upper(encrypted_zeros), ejson: None});
             off += 32;
         }
 
     } else if blob_subtype == 16 {
         let keyuuid = &input[off..off+16];
-        ret.push(Item { start: off, end: off+16, key: "KeyUUID".to_string(), val: hex::encode(keyuuid), ejson: None});
+        ret.push(Item { start: off, end: off+16, key: "KeyUUID".to_string(), val: hex::encode_upper(keyuuid), ejson: None});
         off += 16;
 
         let original_bson_type = input[off];
@@ -998,11 +998,11 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         off += 1;
 
         let ciphertext = &input[off..];
-        ret.push(Item { start: off, end: off + ciphertext.len(), key: "Ciphertext".to_string(), val: hex::encode(ciphertext), ejson: None});
+        ret.push(Item { start: off, end: off + ciphertext.len(), key: "Ciphertext".to_string(), val: hex::encode_upper(ciphertext), ejson: None});
         off += ciphertext.len();
     } else if blob_subtype == 17 {
         let keyuuid = &input[off..off+16];
-        ret.push(Item { start: off, end: off+16, key: "key_uuid".to_string(), val: hex::encode(keyuuid), ejson: None});
+        ret.push(Item { start: off, end: off+16, key: "key_uuid".to_string(), val: hex::encode_upper(keyuuid), ejson: None});
         off += 16;
 
         let original_bson_type = input[off];
@@ -1032,66 +1032,66 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         let metadata_len = metadata_block_count * 96; // encCount(32) + tag(32) + encZeros(32)
 
         let ciphertext = &input[off..(input.len() - metadata_len)];
-        ret.push(Item { start: off, end: off + ciphertext.len(), key: "ServerEncryptedValue".to_string(), val: hex::encode(ciphertext), ejson: None});
+        ret.push(Item { start: off, end: off + ciphertext.len(), key: "ServerEncryptedValue".to_string(), val: hex::encode_upper(ciphertext), ejson: None});
         off += ciphertext.len();
 
         // Read exact metadata:
         {
             let encrypted_count = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+32, key: "Exact.encryptedCount".to_string(), val: hex::encode(encrypted_count), ejson: None});
+            ret.push(Item { start: off, end: off+32, key: "Exact.encryptedCount".to_string(), val: hex::encode_upper(encrypted_count), ejson: None});
             off += 32;
     
             let tag = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+32, key: "Exact.tag".to_string(), val: hex::encode(tag), ejson: None});
+            ret.push(Item { start: off, end: off+32, key: "Exact.tag".to_string(), val: hex::encode_upper(tag), ejson: None});
             off += 32;
     
             let encrypted_zeros = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+32, key: "Exact.encryptedZeros".to_string(), val: hex::encode(encrypted_zeros), ejson: None});
+            ret.push(Item { start: off, end: off+32, key: "Exact.encryptedZeros".to_string(), val: hex::encode_upper(encrypted_zeros), ejson: None});
             off += 32;
         }
 
         // Read substr metadata:
         for i in 0..substr_tag_count {
             let encrypted_count = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+32, key: format!("Substr.encryptedCount[{}]", i), val: hex::encode(encrypted_count), ejson: None});
+            ret.push(Item { start: off, end: off+32, key: format!("Substr.encryptedCount[{}]", i), val: hex::encode_upper(encrypted_count), ejson: None});
             off += 32;
     
             let tag = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+32, key: format!("Substr.tag[{}]", i), val: hex::encode(tag), ejson: None});
+            ret.push(Item { start: off, end: off+32, key: format!("Substr.tag[{}]", i), val: hex::encode_upper(tag), ejson: None});
             off += 32;
     
             let encrypted_zeros = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+32, key: format!("Substr.encryptedZeros[{}]", i), val: hex::encode(encrypted_zeros), ejson: None});
+            ret.push(Item { start: off, end: off+32, key: format!("Substr.encryptedZeros[{}]", i), val: hex::encode_upper(encrypted_zeros), ejson: None});
             off += 32;
         } 
 
         // Read suffix metadata:
         for i in 0..substr_tag_count {
             let encrypted_count = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+32, key: format!("Suffix.encryptedCount[{}]", i), val: hex::encode(encrypted_count), ejson: None});
+            ret.push(Item { start: off, end: off+32, key: format!("Suffix.encryptedCount[{}]", i), val: hex::encode_upper(encrypted_count), ejson: None});
             off += 32;
     
             let tag = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+32, key: format!("Suffix.tag[{}]", i), val: hex::encode(tag), ejson: None});
+            ret.push(Item { start: off, end: off+32, key: format!("Suffix.tag[{}]", i), val: hex::encode_upper(tag), ejson: None});
             off += 32;
     
             let encrypted_zeros = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+32, key: format!("Suffix.encryptedZeros[{}]", i), val: hex::encode(encrypted_zeros), ejson: None});
+            ret.push(Item { start: off, end: off+32, key: format!("Suffix.encryptedZeros[{}]", i), val: hex::encode_upper(encrypted_zeros), ejson: None});
             off += 32;
         }
 
         // Read prefix metadata:
         for i in 0..(edge_count - (substr_tag_count + suffix_tag_count + 1)) {
             let encrypted_count = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+32, key: format!("Prefix.encryptedCount[{}]", i), val: hex::encode(encrypted_count), ejson: None});
+            ret.push(Item { start: off, end: off+32, key: format!("Prefix.encryptedCount[{}]", i), val: hex::encode_upper(encrypted_count), ejson: None});
             off += 32;
     
             let tag = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+32, key: format!("Prefix.tag[{}]", i), val: hex::encode(tag), ejson: None});
+            ret.push(Item { start: off, end: off+32, key: format!("Prefix.tag[{}]", i), val: hex::encode_upper(tag), ejson: None});
             off += 32;
     
             let encrypted_zeros = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+32, key: format!("Prefix.encryptedZeros[{}]", i), val: hex::encode(encrypted_zeros), ejson: None});
+            ret.push(Item { start: off, end: off+32, key: format!("Prefix.encryptedZeros[{}]", i), val: hex::encode_upper(encrypted_zeros), ejson: None});
             off += 32;
         } 
     } else if blob_subtype == 18 {
@@ -1119,7 +1119,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                             if keystr == "d" {
                                 let desc = match bson {
                                     bson::Bson::Binary(b) => {
-                                        hex::encode(b.bytes)
+                                        hex::encode_upper(b.bytes)
                                     },
                                     _ => panic!("Unexpected non-binary for d")
                                 };
@@ -1128,7 +1128,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                             else if keystr == "s" {
                                 let desc = match bson {
                                     bson::Bson::Binary(b) => {
-                                        hex::encode(b.bytes)
+                                        hex::encode_upper(b.bytes)
                                     },
                                     _ => panic!("Unexpected non-binary for s")
                                 };
@@ -1137,7 +1137,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                             else if keystr == "l" {
                                 let desc = match bson {
                                     bson::Bson::Binary(b) => {
-                                        hex::encode(b.bytes)
+                                        hex::encode_upper(b.bytes)
                                     },
                                     _ => panic!("Unexpected non-binary for l")
                                 };
@@ -1155,7 +1155,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                             if keystr == "d" {
                                 let desc = match bson {
                                     bson::Bson::Binary(b) => {
-                                        hex::encode(b.bytes)
+                                        hex::encode_upper(b.bytes)
                                     },
                                     _ => panic!("Unexpected non-binary for d")
                                 };
@@ -1164,7 +1164,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                             else if keystr == "s" {
                                 let desc = match bson {
                                     bson::Bson::Binary(b) => {
-                                        hex::encode(b.bytes)
+                                        hex::encode_upper(b.bytes)
                                     },
                                     _ => panic!("Unexpected non-binary for s")
                                 };
@@ -1173,7 +1173,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                             else if keystr == "l" {
                                 let desc = match bson {
                                     bson::Bson::Binary(b) => {
-                                        hex::encode(b.bytes)
+                                        hex::encode_upper(b.bytes)
                                     },
                                     _ => panic!("Unexpected non-binary for l")
                                 };
@@ -1192,7 +1192,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                             if keystr == "d" {
                                 let desc = match bson {
                                     bson::Bson::Binary(b) => {
-                                        hex::encode(b.bytes)
+                                        hex::encode_upper(b.bytes)
                                     },
                                     _ => panic!("Unexpected non-binary for d")
                                 };
@@ -1201,7 +1201,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                             else if keystr == "s" {
                                 let desc = match bson {
                                     bson::Bson::Binary(b) => {
-                                        hex::encode(b.bytes)
+                                        hex::encode_upper(b.bytes)
                                     },
                                     _ => panic!("Unexpected non-binary for s")
                                 };
@@ -1210,7 +1210,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                             else if keystr == "l" {
                                 let desc = match bson {
                                     bson::Bson::Binary(b) => {
-                                        hex::encode(b.bytes)
+                                        hex::encode_upper(b.bytes)
                                     },
                                     _ => panic!("Unexpected non-binary for l")
                                 };
@@ -1228,7 +1228,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                             if keystr == "d" {
                                 let desc = match bson {
                                     bson::Bson::Binary(b) => {
-                                        hex::encode(b.bytes)
+                                        hex::encode_upper(b.bytes)
                                     },
                                     _ => panic!("Unexpected non-binary for d")
                                 };
@@ -1237,7 +1237,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                             else if keystr == "s" {
                                 let desc = match bson {
                                     bson::Bson::Binary(b) => {
-                                        hex::encode(b.bytes)
+                                        hex::encode_upper(b.bytes)
                                     },
                                     _ => panic!("Unexpected non-binary for s")
                                 };
@@ -1246,7 +1246,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                             else if keystr == "l" {
                                 let desc = match bson {
                                     bson::Bson::Binary(b) => {
-                                        hex::encode(b.bytes)
+                                        hex::encode_upper(b.bytes)
                                     },
                                     _ => panic!("Unexpected non-binary for l")
                                 };
