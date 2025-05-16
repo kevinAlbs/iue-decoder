@@ -169,12 +169,10 @@ impl BsonIter {
             end = self.off;
         } else if signed_byte == 3u8 {
             let len = read_i32 (input, self.off);
-            println!("doc len: {}", len);
             self.off += len;
             end = self.off;
         }  else if signed_byte == 4u8 {
             let len = read_i32 (input, self.off);
-            println!("doc len: {}", len);
             self.off += len;
             end = self.off;
         } else if signed_byte == 8u8 {
@@ -466,8 +464,9 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                 ret.push(Item { start, end, key: "IndexKeyId".to_string(), ejson, val: desc })
             }
             else if keystr == "t" {
-                let desc = format!("{}", bson.as_i32().unwrap());
-                ret.push(Item { start, end, key: "Encrypted Type".to_string(), ejson, val: desc })
+                let bson_type = bson.as_i32().unwrap() as u8;
+                let desc = format!("{} ({})", bson_type, bson_type_to_string (bson_type));
+                ret.push(Item { start, end, key: "EncryptedType".to_string(), ejson, val: desc })
             }
             else if keystr == "v" {
                 let desc = bson.into_relaxed_extjson().to_string();
@@ -524,7 +523,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
             }
             else if keystr == "cm" {
                 let desc = format!("{}", bson.as_i64().unwrap());
-                ret.push(Item { start, end, key: "Encrypted tokens".to_string(), ejson, val: desc })
+                ret.push(Item { start, end, key: "EncryptedTokens".to_string(), ejson, val: desc })
             }
             else if keystr == "e" {
                 let desc = match bson {
@@ -567,7 +566,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         off += ciphertext.len();
     } else if blob_subtype == 9 {
         let keyuuid = &input[off..off+16];
-        ret.push(Item { start: off, end: off+16, key: "key_uuid".to_string(), val: hex::encode_upper(keyuuid), ejson: None});
+        ret.push(Item { start: off, end: off+16, key: "KeyUUID".to_string(), val: hex::encode_upper(keyuuid), ejson: None});
         off += 16;
 
         let original_bson_type = input[off];
@@ -588,10 +587,8 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
 
             if keystr == "payload" {
                 // Create a recursive iterator.
-                println!("recursing payload ... begin");
                 let mut payload_iter = iter.recurse(input);
                 while let Some(el) = payload_iter.next_element(input) {
-                    println!("on key {} ... begin", el.keystr);
 
                     let BsonElement{keystr, start, end} = el;
                     let bytes = &input[start..end];
@@ -615,7 +612,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                                         },
                                         _ => panic!("Unexpected non-binary for g")
                                     };
-                                    ret.push(Item { start, end, key: format!("payload edge [{}] EDCDerivedFromDataToken", idx), ejson, val: desc })
+                                    ret.push(Item { start, end, key: format!("Edge[{}].EDCDerivedFromDataToken", idx), ejson, val: desc })
                                 }
                                 else if keystr == "s" {
                                     let desc = match bson {
@@ -624,7 +621,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                                         },
                                         _ => panic!("Unexpected non-binary for g")
                                     };
-                                    ret.push(Item { start, end, key: format!("payload edge [{}] ESCDerivedFromDataToken", idx), ejson, val: desc })
+                                    ret.push(Item { start, end, key: format!("Edge[{}].ESCDerivedFromDataToken", idx), ejson, val: desc })
                                 }
                                 else if keystr == "c" {
                                     let desc = match bson {
@@ -633,7 +630,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                                         },
                                         _ => panic!("Unexpected non-binary for g")
                                     };
-                                    ret.push(Item { start, end, key: format!("payload edge [{}] ECCDerivedFromDataToken", idx), ejson, val: desc })
+                                    ret.push(Item { start, end, key: format!("Edge[{}].ECCDerivedFromDataToken", idx), ejson, val: desc })
                                 }
                             }
                         }
@@ -644,28 +641,25 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                             }
                             _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
                         }.to_string();
-                        ret.push(Item { start, end, key: "payload.ServerDataEncryptionLevel1Token".to_string(), ejson, val: desc })
+                        ret.push(Item { start, end, key: "ServerDataEncryptionLevel1Token".to_string(), ejson, val: desc })
                     }
                     else if keystr == "cm" {
                         let desc = format!("{}", bson.as_i64().unwrap());
-                        ret.push(Item { start, end, key: "payload.Queryable Encryption max counter".to_string(), ejson, val: desc })
+                        ret.push(Item { start, end, key: "MaxContentionCounter".to_string(), ejson, val: desc })
                     }
-                    println!("on key ... end");
                 }
-
-                println!("recursing payload ... end");
             }
             else if keystr == "payloadId" {
                 let desc = format!("{}", bson.as_i32().unwrap());
-                ret.push(Item { start, end, key: "payloadId".to_string(), ejson, val: desc })
+                ret.push(Item { start, end, key: "PayloadId".to_string(), ejson, val: desc })
             }
             else if keystr == "firstOperator" {
                 let desc = format!("{}", bson.as_i32().unwrap());
-                ret.push(Item { start, end, key: "firstOperator".to_string(), ejson, val: desc })
+                ret.push(Item { start, end, key: "FirstOperator".to_string(), ejson, val: desc })
             }
             else if keystr == "secondOperator" {
                 let desc = format!("{}", bson.as_i32().unwrap());
-                ret.push(Item { start, end, key: "secondOperator".to_string(), ejson, val: desc })
+                ret.push(Item { start, end, key: "SecondOperator".to_string(), ejson, val: desc })
             }
             else {
                 panic!("unexpected field for {:?}: {}", blob_subtype, keystr);
@@ -705,7 +699,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                     }
                     _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
                 }.to_string();
-                ret.push(Item { start, end, key: "Encrypted tokens".to_string(), ejson, val: desc })
+                ret.push(Item { start, end, key: "EncryptedTokens".to_string(), ejson, val: desc })
             }
             else if keystr == "u" {
                 let desc = match bson {
@@ -717,8 +711,9 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                 ret.push(Item { start, end, key: "IndexKeyId".to_string(), ejson, val: desc })
             }
             else if keystr == "t" {
-                let desc = format!("{}", bson.as_i32().unwrap());
-                ret.push(Item { start, end, key: "Encrypted Type".to_string(), ejson, val: desc })
+                let bson_type = bson.as_i32().unwrap() as u8;
+                let desc = format!("{} ({})", bson_type, bson_type_to_string (bson_type));
+                ret.push(Item { start, end, key: "EncryptedType".to_string(), ejson, val: desc })
             }
             else if keystr == "v" {
                 let desc = bson.into_relaxed_extjson().to_string();
@@ -742,7 +737,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                 ret.push(Item { start, end, key: "ServerDerivedFromDataToken".to_string(), ejson, val: desc })
             } else if keystr == "k" {
                 let desc = format!("{}", bson.as_i64().unwrap());
-                ret.push(Item { start, end, key: "Randomly sampled contention factor".to_string(), ejson, val: desc })
+                ret.push(Item { start, end, key: "RandomContentionFactor".to_string(), ejson, val: desc })
             } else if keystr == "g" {
                 todo!();
             } else if keystr == "b" {
@@ -755,13 +750,13 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                 ret.push(Item { start, end, key: "Precision".to_string(), ejson, val: desc })
             } else if keystr == "tf" {
                 let desc = format!("{}", bson.as_i32().unwrap());
-                ret.push(Item { start, end, key: "Trim Factor".to_string(), ejson, val: desc })
+                ret.push(Item { start, end, key: "TrimFactor".to_string(), ejson, val: desc })
             } else if keystr == "mn" {
                 let desc = ejson.clone().unwrap();
-                ret.push(Item { start, end, key: "Index min".to_string(), val: desc, ejson })
+                ret.push(Item { start, end, key: "IndexMin".to_string(), val: desc, ejson })
             } else if keystr == "mx" {
                 let desc = ejson.clone().unwrap();
-                ret.push(Item { start, end, key: "Index max".to_string(), val: desc, ejson })
+                ret.push(Item { start, end, key: "IndexMax".to_string(), val: desc, ejson })
             }
             else {
                 panic!("unexpected field for {:?}: {}", blob_subtype, keystr);
@@ -805,7 +800,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
             }
             else if keystr == "cm" {
                 let desc = format!("{}", bson.as_i64().unwrap());
-                ret.push(Item { start, end, key: "Encrypted tokens".to_string(), ejson, val: desc })
+                ret.push(Item { start, end, key: "MaxContentionCounter".to_string(), ejson, val: desc })
             }
             else {
                 panic!("unexpected field for {:?}: {}", blob_subtype, keystr);
@@ -824,10 +819,8 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
 
             if keystr == "payload" {
                 // Create a recursive iterator.
-                println!("recursing payload ... begin");
                 let mut payload_iter = iter.recurse(input);
                 while let Some(el) = payload_iter.next_element(input) {
-                    println!("on key {} ... begin", el.keystr);
 
                     let BsonElement{keystr, start, end} = el;
                     let bytes = &input[start..end];
@@ -851,7 +844,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                                         },
                                         _ => panic!("Unexpected non-binary for g")
                                     };
-                                    ret.push(Item { start, end, key: format!("payload edge [{}] EDCDerivedFromDataToken", idx), ejson, val: desc })
+                                    ret.push(Item { start, end, key: format!("Edge[{}].EDCDerivedFromDataToken", idx), ejson, val: desc })
                                 }
                                 else if keystr == "s" {
                                     let desc = match bson {
@@ -860,7 +853,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                                         },
                                         _ => panic!("Unexpected non-binary for g")
                                     };
-                                    ret.push(Item { start, end, key: format!("payload edge [{}] ESCDerivedFromDataToken", idx), ejson, val: desc })
+                                    ret.push(Item { start, end, key: format!("Edge[{}].ESCDerivedFromDataToken", idx), ejson, val: desc })
                                 }
                                 else if keystr == "c" {
                                     let desc = match bson {
@@ -869,7 +862,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                                         },
                                         _ => panic!("Unexpected non-binary for g")
                                     };
-                                    ret.push(Item { start, end, key: format!("payload edge [{}] ECCDerivedFromDataToken", idx), ejson, val: desc })
+                                    ret.push(Item { start, end, key: format!("Edge[{}].ECCDerivedFromDataToken", idx), ejson, val: desc })
                                 }
                             }
                         }
@@ -880,40 +873,38 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                             }
                             _ => panic!("Unexpected non-binary for {}, {}", blob_subtype, keystr)
                         }.to_string();
-                        ret.push(Item { start, end, key: "payload.ServerDataEncryptionLevel1Token".to_string(), ejson, val: desc })
+                        ret.push(Item { start, end, key: "ServerDataEncryptionLevel1Token".to_string(), ejson, val: desc })
                     }
-                    println!("on key ... end");
                 }
 
-                println!("recursing payload ... end");
             }
             else if keystr == "payloadId" {
                 let desc = format!("{}", bson.as_i32().unwrap());
-                ret.push(Item { start, end, key: "payloadId".to_string(), ejson, val: desc })
+                ret.push(Item { start, end, key: "PayloadId".to_string(), ejson, val: desc })
             }
             else if keystr == "firstOperator" {
                 let desc = format!("{}", bson.as_i32().unwrap());
-                ret.push(Item { start, end, key: "firstOperator".to_string(), ejson, val: desc })
+                ret.push(Item { start, end, key: "FirstOperator".to_string(), ejson, val: desc })
             }
             else if keystr == "secondOperator" {
                 let desc = format!("{}", bson.as_i32().unwrap());
-                ret.push(Item { start, end, key: "secondOperator".to_string(), ejson, val: desc })
+                ret.push(Item { start, end, key: "SecondOperator".to_string(), ejson, val: desc })
             } else if keystr == "cm" {
                 let desc = format!("{}", bson.as_i64().unwrap());
-                ret.push(Item { start, end, key: "payload.Queryable Encryption max counter".to_string(), ejson, val: desc })
+                ret.push(Item { start, end, key: "MaxContentionCounter".to_string(), ejson, val: desc })
             } else if keystr == "sp" {
                 let desc = format!("{}", bson.as_i64().unwrap());
-                ret.push(Item { start, end, key: "payload.Queryable Encryption sparsity".to_string(), ejson, val: desc })
+                ret.push(Item { start, end, key: "Sparsity".to_string(), ejson, val: desc })
             } else if keystr == "pn" {
                 let desc = format!("{}", bson.as_i64().unwrap());
-                ret.push(Item { start, end, key: "payload.Queryable Encryption precision".to_string(), ejson, val: desc })
+                ret.push(Item { start, end, key: "Precision".to_string(), ejson, val: desc })
             } else if keystr == "tf" {
                 let desc = format!("{}", bson.as_i32().unwrap());
-                ret.push(Item { start, end, key: "payload.Queryable Encryption trimFactor".to_string(), ejson, val: desc })
+                ret.push(Item { start, end, key: "TrimFactor".to_string(), ejson, val: desc })
             } else if keystr == "mn" {
-                ret.push(Item { start, end, key: "payload.Queryable Encryption indexMin".to_string(), ejson: ejson.clone(), val: ejson.unwrap() })
+                ret.push(Item { start, end, key: "IndexMin".to_string(), ejson: ejson.clone(), val: ejson.unwrap() })
             } else if keystr == "mx" {
-                ret.push(Item { start, end, key: "payload.Queryable Encryption indexMax".to_string(), ejson: ejson.clone(), val: ejson.unwrap() })
+                ret.push(Item { start, end, key: "IndexMax".to_string(), ejson: ejson.clone(), val: ejson.unwrap() })
             }
             else {
                 panic!("unexpected field for {:?}: {}", blob_subtype, keystr);
@@ -961,19 +952,19 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         off += ciphertext.len();
 
         let encrypted_count = &input[off..off + 32];
-        ret.push(Item { start: off, end: off+32, key: "encryptedCount".to_string(), val: hex::encode_upper(encrypted_count), ejson: None});
+        ret.push(Item { start: off, end: off+32, key: "EncryptedCount".to_string(), val: hex::encode_upper(encrypted_count), ejson: None});
         off += 32;
 
         let tag = &input[off..off + 32];
-        ret.push(Item { start: off, end: off+32, key: "tag".to_string(), val: hex::encode_upper(tag), ejson: None});
+        ret.push(Item { start: off, end: off+32, key: "Tag".to_string(), val: hex::encode_upper(tag), ejson: None});
         off += 32;
 
         let encrypted_zeros = &input[off..off + 32];
-        ret.push(Item { start: off, end: off+32, key: "encryptedZeros".to_string(), val: hex::encode_upper(encrypted_zeros), ejson: None});
+        ret.push(Item { start: off, end: off+32, key: "EncryptedZeros".to_string(), val: hex::encode_upper(encrypted_zeros), ejson: None});
         off += 32;
     } else if blob_subtype == 15 {
         let keyuuid = &input[off..off+16];
-        ret.push(Item { start: off, end: off+16, key: "key_uuid".to_string(), val: hex::encode_upper(keyuuid), ejson: None});
+        ret.push(Item { start: off, end: off+16, key: "KeyUUID".to_string(), val: hex::encode_upper(keyuuid), ejson: None});
         off += 16;
 
         let original_bson_type = input[off];
@@ -991,15 +982,15 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
 
         for i in 0..edge_count {
             let encrypted_count = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+32, key: format!("encryptedCount[{}]", i), val: hex::encode_upper(encrypted_count), ejson: None});
+            ret.push(Item { start: off, end: off+32, key: format!("EncryptedCount[{}]", i), val: hex::encode_upper(encrypted_count), ejson: None});
             off += 32;
     
             let tag = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+32, key: format!("tag[{}]", i), val: hex::encode_upper(tag), ejson: None});
+            ret.push(Item { start: off, end: off+32, key: format!("Tag[{}]", i), val: hex::encode_upper(tag), ejson: None});
             off += 32;
     
             let encrypted_zeros = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+32, key: format!("encryptedZeros[{}]", i), val: hex::encode_upper(encrypted_zeros), ejson: None});
+            ret.push(Item { start: off, end: off+32, key: format!("EncryptedZeros[{}]", i), val: hex::encode_upper(encrypted_zeros), ejson: None});
             off += 32;
         }
 
@@ -1017,7 +1008,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         off += ciphertext.len();
     } else if blob_subtype == 17 {
         let keyuuid = &input[off..off+16];
-        ret.push(Item { start: off, end: off+16, key: "key_uuid".to_string(), val: hex::encode_upper(keyuuid), ejson: None});
+        ret.push(Item { start: off, end: off+16, key: "KeyUUID".to_string(), val: hex::encode_upper(keyuuid), ejson: None});
         off += 16;
 
         let original_bson_type = input[off];
@@ -1025,23 +1016,16 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         off += 1;
 
         let edge_count = input[off] as usize;
-        println!("{:?}", &input[off..off+4]);
         ret.push(Item { start: off, end: off+4, key: "EdgeCount".to_string(), val: format!("{}", edge_count), ejson: None});
         off += 4;
-
-        println!("edge_count={}", edge_count);
 
         let substr_tag_count = read_u32 (input, off);
         ret.push(Item { start: off, end: off+4, key: "SubstrTagCount".to_string(), val: format!("{}", edge_count), ejson: None});
         off += 4;
 
-        println!("substr_tag_count={}", substr_tag_count);
-
         let suffix_tag_count = read_u32 (input, off);
         ret.push(Item { start: off, end: off+4, key: "SuffixTagCount".to_string(), val: format!("{}", edge_count), ejson: None});
         off += 4;
-
-        println!("suffix_tag_count={}", suffix_tag_count);
 
         let metadata_block_count = 1 /* exact */ + edge_count;
         let metadata_len = metadata_block_count * 96; // encCount(32) + tag(32) + encZeros(32)
@@ -1053,60 +1037,60 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
         // Read exact metadata:
         {
             let encrypted_count = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+32, key: "Exact.encryptedCount".to_string(), val: hex::encode_upper(encrypted_count), ejson: None});
+            ret.push(Item { start: off, end: off+32, key: "Exact.EncryptedCount".to_string(), val: hex::encode_upper(encrypted_count), ejson: None});
             off += 32;
     
             let tag = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+32, key: "Exact.tag".to_string(), val: hex::encode_upper(tag), ejson: None});
+            ret.push(Item { start: off, end: off+32, key: "Exact.Tag".to_string(), val: hex::encode_upper(tag), ejson: None});
             off += 32;
     
             let encrypted_zeros = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+32, key: "Exact.encryptedZeros".to_string(), val: hex::encode_upper(encrypted_zeros), ejson: None});
+            ret.push(Item { start: off, end: off+32, key: "Exact.EncryptedZeros".to_string(), val: hex::encode_upper(encrypted_zeros), ejson: None});
             off += 32;
         }
 
         // Read substr metadata:
         for i in 0..substr_tag_count {
             let encrypted_count = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+32, key: format!("Substr.encryptedCount[{}]", i), val: hex::encode_upper(encrypted_count), ejson: None});
+            ret.push(Item { start: off, end: off+32, key: format!("Substr.EncryptedCount[{}]", i), val: hex::encode_upper(encrypted_count), ejson: None});
             off += 32;
     
             let tag = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+32, key: format!("Substr.tag[{}]", i), val: hex::encode_upper(tag), ejson: None});
+            ret.push(Item { start: off, end: off+32, key: format!("Substr.Tag[{}]", i), val: hex::encode_upper(tag), ejson: None});
             off += 32;
     
             let encrypted_zeros = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+32, key: format!("Substr.encryptedZeros[{}]", i), val: hex::encode_upper(encrypted_zeros), ejson: None});
+            ret.push(Item { start: off, end: off+32, key: format!("Substr.EncryptedZeros[{}]", i), val: hex::encode_upper(encrypted_zeros), ejson: None});
             off += 32;
         } 
 
         // Read suffix metadata:
         for i in 0..substr_tag_count {
             let encrypted_count = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+32, key: format!("Suffix.encryptedCount[{}]", i), val: hex::encode_upper(encrypted_count), ejson: None});
+            ret.push(Item { start: off, end: off+32, key: format!("Suffix.EncryptedCount[{}]", i), val: hex::encode_upper(encrypted_count), ejson: None});
             off += 32;
     
             let tag = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+32, key: format!("Suffix.tag[{}]", i), val: hex::encode_upper(tag), ejson: None});
+            ret.push(Item { start: off, end: off+32, key: format!("Suffix.Tag[{}]", i), val: hex::encode_upper(tag), ejson: None});
             off += 32;
     
             let encrypted_zeros = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+32, key: format!("Suffix.encryptedZeros[{}]", i), val: hex::encode_upper(encrypted_zeros), ejson: None});
+            ret.push(Item { start: off, end: off+32, key: format!("Suffix.EncryptedZeros[{}]", i), val: hex::encode_upper(encrypted_zeros), ejson: None});
             off += 32;
         }
 
         // Read prefix metadata:
         for i in 0..(edge_count - (substr_tag_count + suffix_tag_count + 1)) {
             let encrypted_count = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+32, key: format!("Prefix.encryptedCount[{}]", i), val: hex::encode_upper(encrypted_count), ejson: None});
+            ret.push(Item { start: off, end: off+32, key: format!("Prefix.EncryptedCount[{}]", i), val: hex::encode_upper(encrypted_count), ejson: None});
             off += 32;
     
             let tag = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+32, key: format!("Prefix.tag[{}]", i), val: hex::encode_upper(tag), ejson: None});
+            ret.push(Item { start: off, end: off+32, key: format!("Prefix.Tag[{}]", i), val: hex::encode_upper(tag), ejson: None});
             off += 32;
     
             let encrypted_zeros = &input[off..off + 32];
-            ret.push(Item { start: off, end: off+32, key: format!("Prefix.encryptedZeros[{}]", i), val: hex::encode_upper(encrypted_zeros), ejson: None});
+            ret.push(Item { start: off, end: off+32, key: format!("Prefix.EncryptedZeros[{}]", i), val: hex::encode_upper(encrypted_zeros), ejson: None});
             off += 32;
         } 
     } else if blob_subtype == 18 {
@@ -1119,10 +1103,8 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
 
             if keystr == "ts" {
                 // Create a recursive iterator.
-                println!("recursing payload ... begin");
                 let mut ts_iter = iter.recurse(input);
                 while let Some(el) = ts_iter.next_element(input) {
-                    println!("on key {} ... begin", el.keystr);
                     if el.keystr == "e" {
                         let mut e_iter = ts_iter.recurse(input);
                         while let Some(el) = e_iter.next_element(input) {
@@ -1269,10 +1251,7 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                             }
                         }
                     }
-                    println!("on key ... end");
                 }
-
-                println!("recursing payload ... end");
             }
             else if keystr == "cf" {
                 let desc = format!("{}", bson.as_bool().unwrap());
@@ -1291,15 +1270,15 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                     let ejson = Some(bytes_to_ejson(bytes));
                     if keystr == "mlen" {
                         let desc = format!("{}", bson.as_i32().unwrap());
-                        ret.push(Item { start, end, key: "Substring Max Codelength".to_string(), ejson, val: desc })
+                        ret.push(Item { start, end, key: "SubstringMaxCodelength".to_string(), ejson, val: desc })
                     }
                     else if keystr == "ub" {
                         let desc = format!("{}", bson.as_i32().unwrap());
-                        ret.push(Item { start, end, key: "Substring Upper bound".to_string(), ejson, val: desc })
+                        ret.push(Item { start, end, key: "SubstringUpperBound".to_string(), ejson, val: desc })
                     }
                     else if keystr == "lb" {
                         let desc = format!("{}", bson.as_i32().unwrap());
-                        ret.push(Item { start, end, key: "Substring Lower bound".to_string(), ejson, val: desc })
+                        ret.push(Item { start, end, key: "SubstringLowerBound".to_string(), ejson, val: desc })
                     } else {
                         panic!("Unexpected key: {}", keystr);
                     }
@@ -1315,11 +1294,11 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                     
                     if keystr == "ub" {
                         let desc = format!("{}", bson.as_i32().unwrap());
-                        ret.push(Item { start, end, key: "Suffix Upper bound".to_string(), ejson, val: desc })
+                        ret.push(Item { start, end, key: "SuffixUpperBound".to_string(), ejson, val: desc })
                     }
                     else if keystr == "lb" {
                         let desc = format!("{}", bson.as_i32().unwrap());
-                        ret.push(Item { start, end, key: "Suffix Lower bound".to_string(), ejson, val: desc })
+                        ret.push(Item { start, end, key: "SuffixLowerBound".to_string(), ejson, val: desc })
                     } else {
                         panic!("Unexpected key: {}", keystr);
                     }
@@ -1335,11 +1314,11 @@ pub fn decode_payload (input: &[u8]) -> Vec<Item> {
                     
                     if keystr == "ub" {
                         let desc = format!("{}", bson.as_i32().unwrap());
-                        ret.push(Item { start, end, key: "Prefix Upper bound".to_string(), ejson, val: desc })
+                        ret.push(Item { start, end, key: "PrefixUpperBound".to_string(), ejson, val: desc })
                     }
                     else if keystr == "lb" {
                         let desc = format!("{}", bson.as_i32().unwrap());
-                        ret.push(Item { start, end, key: "Prefix Lower bound".to_string(), ejson, val: desc })
+                        ret.push(Item { start, end, key: "PrefixLowerBound".to_string(), ejson, val: desc })
                     } else {
                         panic!("Unexpected key: {}", keystr);
                     }

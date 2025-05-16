@@ -5,5 +5,5 @@ ServerTextExactDerivedFromDataToken=8773322A2B9E6C08886DB6BC65B46FFDD64651E8A494
 MaxContentionCounter=43 ("cm":43)
 CaseFolding=true ("cf":true)
 DiacriticFolding=false ("df":false)
-Prefix Upper bound=20 ("ub":20)
-Prefix Lower bound=2 ("lb":2)
+PrefixUpperBound=20 ("ub":20)
+PrefixLowerBound=2 ("lb":2)
