@@ -58,6 +58,15 @@
     #ejson_section {
       display: none;
     }
+
+    .error-label {
+      color: rgb(255, 92, 92);
+      font-weight: bold;
+    }
+
+    #view-error {
+      display: none;
+    }
   </style>
 </head>
 
@@ -67,6 +76,7 @@
     <p>Tool to decode payloads for MongoDB In-Use Encryption (IUE): Client-Side Field Level Encryption (CSFLE) and
       Queryable Encryption (QE). <a href="https://github.com/kevinAlbs/iue-decoder">GitHub</a></p>
     <textarea placeholder="Enter payload as base64"></textarea>
+    <p id="view-error"></p>
     <h1>Bytes</h1>
     <div id="view-bytes">(Enter payload above)</div>
     <div id="columns">
@@ -222,19 +232,46 @@
     init().then(() => {
       let view_bytes = document.querySelector("#view-bytes");
       let view_decoded = document.querySelector("#view-decoded");
+      let view_error = document.querySelector("#view-error");
       let textarea = document.querySelector("textarea");
       let textarea_ejson = document.querySelector("#ejson");
       let ejson_section = document.querySelector("#ejson_section");
 
+      function showError(msg) {
+        view_error.innerHTML = "<span class='error-label'>Error:</span> " + msg;
+        view_error.style.display = "block";
+      }
+
+      function resetViews() {
+        view_bytes.innerHTML = "(Enter payload above)";
+        view_decoded.innerHTML = "(Enter payload above)";
+        view_error.style.display = "none";
+      }
+
       function do_decode() {
-        let bytes = atob(textarea.value);
+        resetViews();
+
+        let bytes = null;
+        try {
+          bytes = atob(textarea.value);
+        } catch (e) {
+          if (e instanceof DOMException && e.name === "InvalidCharacterError") {
+            showError("Invalid base64");
+            return;
+          }
+        }
+
+        if (bytes.length === 0) {
+          // Empty string.
+          return;
+        }
+
         view_bytes.innerHTML = "";
         for (let i = 0; i < bytes.length; i++) {
           let byte = bytes.charCodeAt(i);
           const hex = byte.toString(16).toUpperCase().padStart(2, '0');
           view_bytes.innerHTML += `<span data-byte-index="${i}">${hex}</span>`;
         }
-
         let items = decode(textarea.value);
         let str = "<table>";
         items.forEach((item) => {
