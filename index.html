@@ -288,11 +288,14 @@
         }
 
         view_bytes.innerHTML = "";
+        let str = "";
         for (let i = 0; i < bytes.length; i++) {
           let byte = bytes.charCodeAt(i);
           const hex = byte.toString(16).toUpperCase().padStart(2, '0');
-          view_bytes.innerHTML += `<span data-byte-index="${i}">${hex}</span>`;
+          str += `<span data-byte-index="${i}">${hex}</span>`;
         }
+        view_bytes.innerHTML = str;
+
         let items;
         try {
           items = decode(textarea.value);
@@ -300,7 +303,7 @@
           showError(e);
           return;
         }
-        let str = "<table>";
+        str = "<table>";
         items.forEach((item) => {
           str += `<tr><td>${item.key}</td><td data-start='${item.start}' data-end='${item.end}' data-id='${item.key}'><span>${item.val}</span></td></tr>`;
         });
