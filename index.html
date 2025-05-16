@@ -9,6 +9,20 @@
       font-family: monospace;
     }
 
+    #columns {
+      display: flex;
+    }
+
+    #columns>div {
+      /* flex-grow: 1; */
+      margin-right: 1em;
+    }
+
+    #column-explain {
+      padding-right: 1em;
+      border-right: 1px grey dashed;
+    }
+
     span.highlighted,
     td.highlighted span {
       background: rgb(165, 255, 188);
@@ -43,6 +57,8 @@
 
     #view-bytes {
       line-break: anywhere;
+      padding-bottom: 1em;
+      border-bottom: 1px grey dashed;
     }
 
     #ejson {
@@ -80,20 +96,13 @@
     <h1>Bytes</h1>
     <div id="view-bytes">(Enter payload above)</div>
     <div id="columns">
-      <div id="view">
-        <h1>Decoding</h1>
-        <div id="view-decoded">(Enter payload above)</div>
-      </div>
-      <div id="ejson_section">
-        <h2>As Extended JSON</h2>
-        <textarea id="ejson" readonly="readonly"></textarea>
-      </div>
-      <div id="explain">
-        <h1>Explanation</h1>
-        FLE1 payloads are for CSFLE. FLE2 payloads are for QE. See <a
-          href="https://github.com/mongodb/specifications/blob/9d0d3f0042a8cf5faeb47ae7765716151bfca9ef/source/client-side-encryption/client-side-encryption.md#naming">Naming</a>.
-        <!-- Generate the table below with gen-docs.py -->
-        <!--noformat-->
+      <div id="column-explain">
+        <div id="explain">
+          <h1>Explanation</h1>
+          FLE1 payloads are for CSFLE. FLE2 payloads are for QE. See <a
+            href="https://github.com/mongodb/specifications/blob/9d0d3f0042a8cf5faeb47ae7765716151bfca9ef/source/client-side-encryption/client-side-encryption.md#naming">Naming</a>.
+          <!-- Generate the table below with gen-docs.py -->
+          <!--noformat-->
         <div id='blob-reference'>
           <h2>FLE1EncryptionPlaceholder (0)</h2>
           <p><a href='#' data-load='ADgAAAAQYQABAAAABWtpABAAAAAEYWFhYWFhYWFhYWFhYWFhYQJ2AAwAAAA0NTctNTUtNTQ2MgAA'>Load Example</a></p>
@@ -224,7 +233,19 @@
           </div> <!-- #blob-reference -->
         <!--noformat-->
 
-      </div>
+        </div>
+      </div> <!-- #col2 -->
+      <div id="column-decode">
+        <div id="view">
+          <h1>Decoding</h1>
+          <div id="view-decoded">(Enter payload above)</div>
+        </div>
+        <div id="ejson_section">
+          <h2>As Extended JSON</h2>
+          <textarea id="ejson" readonly="readonly"></textarea>
+        </div>
+      </div> <!-- #col1 -->
+
     </div> <!-- #columns -->
   </div>
   <script type="module">
