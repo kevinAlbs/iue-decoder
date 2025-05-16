@@ -2,7 +2,23 @@ use bson::{Bson, Document};
 use hex;
 use wasm_bindgen::prelude::*;
 #[allow(unused_imports)]
-use base64::prelude::*;
+use base64::{prelude::*, DecodeError};
+
+pub struct IUEError {
+    msg: String
+}
+
+impl From<DecodeError> for IUEError {
+    fn from(value: DecodeError) -> Self {
+        return IUEError { msg: value.to_string() }
+    }
+}
+
+impl Into<JsValue> for IUEError {
+    fn into(self) -> JsValue {
+        return JsValue::from_str(&self.msg);
+    }
+}
 
 #[derive(Debug, Clone)]
 #[wasm_bindgen]
@@ -269,7 +285,6 @@ fn test_decode_payload_as_json () {
     let expect = r#"{"a":{"$numberInt":"1"},"ki":{"$binary":{"base64":"YWFhYWFhYWFhYWFhYWFhYQ==","subType":"04"}},"v":"457-55-5462"}"#;
     assert_eq!(got, Some(expect.to_string()));
 }
-
 
 pub fn decode_payload (input: &[u8]) -> Vec<Item> {
     let mut ret = Vec::<Item>::new();

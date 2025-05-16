@@ -272,7 +272,13 @@
           const hex = byte.toString(16).toUpperCase().padStart(2, '0');
           view_bytes.innerHTML += `<span data-byte-index="${i}">${hex}</span>`;
         }
-        let items = decode(textarea.value);
+        let items;
+        try {
+          items = decode(textarea.value);
+        } catch (e) {
+          showError(e);
+          return;
+        }
         let str = "<table>";
         items.forEach((item) => {
           str += `<tr><td>${item.key}</td><td data-start='${item.start}' data-end='${item.end}' data-id='${item.key}'><span>${item.val}</span></td></tr>`;
@@ -310,7 +316,13 @@
           el.addEventListener("mouseout", unhighlight);
         })
 
-        let ejson = decode_as_json(textarea.value);
+        let ejson;
+        try {
+          ejson = decode_as_json(textarea.value);
+        } catch (e) {
+          showError(e);
+          return;
+        }
         if (ejson) {
           // Prettify the JSON.
           let ejson_pretty = JSON.stringify(JSON.parse(ejson), null, 4);
